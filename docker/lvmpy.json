@@ -1,0 +1,5 @@
+{
+    "Name": "lvmpy", 
+    "Description": "A simple volume driver for lvm volumes written in python",
+    "Addr": "http://127.0.0.1:7373",
+}
