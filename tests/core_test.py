@@ -55,7 +55,7 @@ def test_mount_unmount(vg):
     mount(FIRST_VOLUME_NAME)
 
     mountpoint = path(FIRST_VOLUME_NAME)
-    assert mountpoint == '/dev/mapper/schains-vol--a'
+    assert mountpoint == '/dev/mapper/test_schains-vol--a'
 
     unmount(FIRST_VOLUME_NAME)
     with pytest.raises(LvmPyError):
