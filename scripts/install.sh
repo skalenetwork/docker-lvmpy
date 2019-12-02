@@ -10,7 +10,6 @@ apt install python3-dev python3-pip -y
 
 mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG
 
-deactivate
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true
 
