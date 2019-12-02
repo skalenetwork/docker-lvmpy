@@ -1,7 +1,5 @@
 import subprocess
 
-# from config import VOLUME_GROUP
-
 
 VOLUME_GROUP = 'schains'
 VOLUME = 'pytest_docker_lvm'
@@ -17,8 +15,7 @@ def test_create_remove(capfd):
     assert res.returncode == 0
     captured = capfd.readouterr()
 
-    res = subprocess.run(['docker', 'volume', 'ls'])
-    assert res.returncode == 0
+    res = subprocess.call(['docker', 'volume', 'ls'])
     captured = capfd.readouterr()
     lines = captured.out.split('\n')
     assert f'{DRIVER}               {VOLUME}' in lines
@@ -27,8 +24,7 @@ def test_create_remove(capfd):
     assert res.returncode == 0
     captured = capfd.readouterr()
 
-    res = subprocess.run(['docker', 'volume', 'ls'])
-    assert res.returncode == 0
+    res = subprocess.call(['docker', 'volume', 'ls'])
     captured = capfd.readouterr()
     lines = captured.out.split('\n')
     assert f'{DRIVER}               {VOLUME}' not in lines
@@ -39,8 +35,7 @@ def test_create_remove_lsblk_info(capfd):
                           '--opt', f'size={SIZE}M', '--name', VOLUME])
     assert res.returncode == 0
 
-    res = subprocess.run(['lsblk', '-l', '-o', 'name,size,type'])
-    assert res.returncode == 0
+    res = subprocess.call(['lsblk', '-l', '-o', 'name,size,type'])
     captured = capfd.readouterr()
     lines = list(filter(None, captured.out.split('\n')))
     expected = list(filter(None, lines[-1].split(' ')))
@@ -49,8 +44,7 @@ def test_create_remove_lsblk_info(capfd):
     res = subprocess.run(['docker', 'volume', 'remove', VOLUME])
     assert res.returncode == 0
 
-    res = subprocess.run(['lsblk', '-l', '-o', 'name'])
-    assert res.returncode == 0
+    res = subprocess.call(['lsblk', '-l', '-o', 'name'])
     captured = capfd.readouterr()
     lines = captured.out.split('\n')
     assert f'{VOLUME_GROUP}-{VOLUME}' not in lines

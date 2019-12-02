@@ -1,26 +1,25 @@
 #   -*- coding: utf-8 -*-
 #
-#   This file is part of SKALE.py
+#   This file is part of docker-lvmpy
 #
 #   Copyright (C) 2019-Present SKALE Labs
 #
-#   SKALE.py is free software: you can redistribute it and/or modify
+#   docker-lvmpy is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU Affero General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
 #
-#   SKALE.py is distributed in the hope that it will be useful,
+#   docker-lvmpy is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU Affero General Public License for more details.
 #
 #   You should have received a copy of the GNU Affero General Public License
-#   along with SKALE.py.  If not, see <https://www.gnu.org/licenses/>.
-
+#   along with docker-lvmpy.  If not, see <https://www.gnu.org/licenses/>
 
 import os
 
 
-VOLUME_GROUP = 'schains'
 MOUNTPOINT_BASE = '/mnt/'
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
+VOLUME_GROUP = os.getenv('VOLUME_GROUP')

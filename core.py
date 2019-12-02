@@ -4,18 +4,18 @@
 #
 #   Copyright (C) 2019-Present SKALE Labs
 #
-#   SKALE.py is free software: you can redistribute it and/or modify
+#   docker-lvmpy is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU Affero General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
 #
-#   SKALE.py is distributed in the hope that it will be useful,
+#   docker-lvmpy is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU Affero General Public License for more details.
 #
 #   You should have received a copy of the GNU Affero General Public License
-#   along with SKALE.py.  If not, see <https://www.gnu.org/licenses/>.
+#   along with docker-lvmpy.  If not, see <https://www.gnu.org/licenses/>
 
 import logging
 import os
@@ -71,13 +71,13 @@ def physical_volumes():
     return pvs
 
 
-def ensure_physical_volume(block_device=PHYSICAL_VOLUME):
+def ensure_physical_volume(physical_volume=PHYSICAL_VOLUME):
     pvs = physical_volumes()
-    if block_device in pvs:
-        logger.warning(f'Physical volume {block_device} already created')
+    if physical_volume in pvs:
+        logger.warning(f'Physical volume {physical_volume} already created')
         return
 
-    res = subprocess.run(['pvcreate', block_device, '-y'])
+    res = subprocess.run(['pvcreate', physical_volume, '-y'])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
         logger.error(f'Physical volume creation failed with {stderr}')
@@ -105,7 +105,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         logger.warning(f'Volume group {name} already created')
         return
 
-    res = subprocess.run('vgcreate', name, physical_volume)
+    res = subprocess.run(['vgcreate', name, physical_volume])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
         logger.error(f'Creating volume group {name} failed with {stderr}')
@@ -113,7 +113,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
 
 
 def create(name, size):
-    logger.info(f'Creatig volume with size {size}')
+    logger.info(f'Creating volume with size {size}')
     res = subprocess.run(['lvcreate', '-L', f'{size}K',
                           '-n', name, VOLUME_GROUP])
     if res.returncode != 0:

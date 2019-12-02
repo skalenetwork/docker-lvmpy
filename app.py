@@ -1,21 +1,21 @@
 #   -*- coding: utf-8 -*-
 #
-#   This file is part of SKALE.py
+#   This file is part of docker-lvmpy
 #
 #   Copyright (C) 2019-Present SKALE Labs
 #
-#   SKALE.py is free software: you can redistribute it and/or modify
+#   docker-lvmpy is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU Affero General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
 #
-#   SKALE.py is distributed in the hope that it will be useful,
+#   docker-lvmpy is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU Affero General Public License for more details.
 #
 #   You should have received a copy of the GNU Affero General Public License
-#   along with SKALE.py.  If not, see <https://www.gnu.org/licenses/>
+#   along with docker-lvmpy.  If not, see <https://www.gnu.org/licenses/>
 
 import json
 import logging
@@ -35,15 +35,16 @@ from core import (
     LvmPyError,
 )
 
+logging.basicConfig(
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    handlers=[logging.StreamHandler()],
+    level=logging.INFO
+)
 
 app = Flask(__name__)
+
 HOST = '0.0.0.0'
 PORT = 7373
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
 DEFAULT_SIZE = '256m'
 
 
@@ -58,6 +59,12 @@ def ok(out_data={}):
 
 def error(err, code=400):
     return response({'Err': err}, code)
+
+
+@app.before_first_request
+def enusre_lvm():
+    ensure_physical_volume()
+    ensure_volume_group()
 
 
 @app.route('/')
@@ -157,7 +164,7 @@ def volumes_list():
     except LvmPyError:
         return error('List operation failed. Recheck input data')
 
-    volumes_data = [{'Name': volumes, 'Status': {}} for volume in volumes]
+    volumes_data = [{'Name': volume, 'Status': {}} for volume in volumes]
     data = {'Volumes': volumes_data, 'Err': ''}
     return ok(out_data=data)
 
@@ -172,8 +179,6 @@ def capabilites():
 
 
 def main():
-    ensure_physical_volume()
-    ensure_volume_group()
     app.run(host=HOST, port=PORT)
 
 

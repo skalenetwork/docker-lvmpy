@@ -1,15 +1,15 @@
 [Unit]
 Description=python lvm docker plugin
-After=multi-user.target
 Conflicts=getty@tty1.service
+After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/uwsgi --ini /root/docker-lvmpy/uwsgi/docker-lvmpy.ini
-RuntimeDirectory=uwsgi
+WorkingDirectory=/opt/docker-lvmpy/
+ExecStart=/opt/docker-lvmpy/venv/bin/python3 app.py
+EnvironmentFile=/etc/docker-lvmpy/lvm-environment
 Restart=always
 KillSignal=SIGQUIT
-Type=notify
 StandardError=syslog
 NotifyAccess=all
 
