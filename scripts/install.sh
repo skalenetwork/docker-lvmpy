@@ -22,7 +22,7 @@ echo "VOLUME_GROUP=$VOLUME_GROUP" >> $DRIVER_CONFIG/lvm-environment
 
 cd $CODE_PATH
 pip3 install virtualenv
-virtualenv venv
+virtualenv --python=python3 venv
 source venv/bin/activate
 pip install -r requirements.txt
 
