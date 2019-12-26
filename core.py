@@ -114,7 +114,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
 
 def create(name, size):
     logger.info(f'Creating volume with size {size}')
-    res = subprocess.run(['lvcreate', '-L', f'{size}K',
+    res = subprocess.run(['lvcreate', '-L', f'{size}B',
                           '-n', name, VOLUME_GROUP])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
