@@ -17,7 +17,7 @@ cp docker/lvmpy.json $DOCKER_PLUGIN_CONFIG
 cp systemd/docker-lvmpy.service $SYSTEMD_CONFIG_PATH
 cp app.py core.py config.py requirements.txt $CODE_PATH
 touch $DRIVER_CONFIG/lvm-environment
-echo "PHYSICAL_VOLUME=$PHYSICAL_VOLUME" >> $DRIVER_CONFIG/lvm-environment
+echo "PHYSICAL_VOLUME=$PHYSICAL_VOLUME" > $DRIVER_CONFIG/lvm-environment
 echo "VOLUME_GROUP=$VOLUME_GROUP" >> $DRIVER_CONFIG/lvm-environment
 
 cd $CODE_PATH
