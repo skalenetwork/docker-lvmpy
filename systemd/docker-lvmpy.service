@@ -9,7 +9,7 @@ WorkingDirectory=/opt/docker-lvmpy/
 ExecStart=/opt/docker-lvmpy/venv/bin/python3 app.py
 EnvironmentFile=/etc/docker-lvmpy/lvm-environment
 Restart=always
-KillSignal=SIGQUIT
+KillSignal=SIGINT
 StandardError=syslog
 NotifyAccess=all
 
