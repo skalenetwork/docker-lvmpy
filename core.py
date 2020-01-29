@@ -139,6 +139,8 @@ def remove(name):
 
 def mount(name):
     mountpoint = volume_mountpoint(name)
+    if os.path.ismount(mountpoint):
+        unmount(name)
     if not os.path.exists(mountpoint):
         res = subprocess.run(['mkdir', mountpoint])
         if res.returncode != 0:
