@@ -109,7 +109,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
         logger.error(f'Creating volume group {name} failed with {stderr}')
-        raise LvmPyError('Volume group Creation failed')
+        raise LvmPyError('Volume group creation failed')
 
 
 def create(name, size):
@@ -130,6 +130,9 @@ def create(name, size):
 
 
 def remove(name):
+    mountpoint = volume_mountpoint(name)
+    if os.path.ismount(mountpoint):
+        unmount(name)
     res = subprocess.run(['lvremove', '-f', volume_device(name)])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')

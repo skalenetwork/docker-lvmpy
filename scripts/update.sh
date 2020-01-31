@@ -1,5 +1,14 @@
 set -e
 
+if [[ -z $PHYSICAL_VOLUME ]]; then
+    echo 'You should set PHYSICAL_VOLUME variable'
+    exit 1
+fi
+if [[ -z $VOLUME_GROUP ]]; then
+    echo 'You should set VOLUME_GROUP variable'
+    exit 1
+fi
+
 CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/
