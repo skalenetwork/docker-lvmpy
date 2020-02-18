@@ -32,7 +32,7 @@ from core import (
     path as volume_path,
     get as get_volume,
     volumes as list_volumes,
-    LvmPyError,
+    LvmPyError
 )
 
 logging.basicConfig(
