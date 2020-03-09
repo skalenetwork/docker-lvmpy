@@ -37,9 +37,11 @@ from core import (
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-    handlers=[logging.StreamHandler()],
+    handlers=[logging.StreamHandler(),
+              logging.FileHandler('/var/log/docker-lvmpy/lvmpy.log')],
     level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -82,6 +84,8 @@ def create():
     data = request.get_json(force=True)
     name = data['Name']
     options = data.get('Opts', {})
+    if options is None:
+        options = {}
     size_str = options.get('size') or DEFAULT_SIZE
 
     try:

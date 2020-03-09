@@ -13,6 +13,24 @@ CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/
 DRIVER_CONFIG=/etc/docker-lvmpy/
+LOG_PATH=/var/log/docker-lvmpy
+
+if [[ ! -d $CODE_PATH ]]; then
+    mkdir -p $CODE_PATH
+fi
+if [[ ! -d $DOCKER_PLUGIN_CONFIG ]]; then
+    mkdir -p $DOCKER_PLUGIN_CONFIG
+fi
+if [[ ! -d $SYSTEMD_CONFIG_PATH ]]; then
+    mkdir -p $SYSTEMD_CONFIG_PATH
+fi
+if [[ ! -d $DRIVER_CONFIG ]]; then
+    mkdir -p $DRIVER_CONFIG
+fi
+if [[ ! -d $LOG_PATH ]]; then
+    mkdir -p $LOG_PATH
+fi
+
 
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true

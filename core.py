@@ -20,7 +20,6 @@
 import logging
 import os
 import subprocess
-
 from functools import partial
 
 from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
@@ -141,8 +140,10 @@ def remove(name):
 
 
 def mount(name):
+    logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
+        logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name)
     if not os.path.exists(mountpoint):
         res = subprocess.run(['mkdir', mountpoint])
@@ -164,6 +165,7 @@ def mount(name):
 
 
 def unmount(name):
+    logger.info(f'Unmounting volume {name}')
     res = subprocess.run(['umount', volume_device(name)])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
