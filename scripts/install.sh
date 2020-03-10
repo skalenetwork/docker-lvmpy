@@ -4,11 +4,12 @@ CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/
 DRIVER_CONFIG=/etc/docker-lvmpy/
+LOG_PATH=/var/log/docker-lvmpy/
 
 apt update
 apt install python3-dev python3-pip -y
 
-mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG
+mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG $LOG_PATH
 
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true

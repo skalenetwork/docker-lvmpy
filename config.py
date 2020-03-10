@@ -23,3 +23,4 @@ import os
 MOUNTPOINT_BASE = '/mnt/'
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = os.getenv('VOLUME_GROUP')
+LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
