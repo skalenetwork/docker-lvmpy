@@ -34,11 +34,13 @@ from core import (
     volumes as list_volumes,
     LvmPyError,
 )
+from config import LOG_PATH
+
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
     handlers=[logging.StreamHandler(),
-              logging.FileHandler('/var/log/docker-lvmpy/lvmpy.log')],
+              logging.FileHandler(LOG_PATH)],
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
