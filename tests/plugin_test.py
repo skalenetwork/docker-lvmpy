@@ -1,4 +1,6 @@
 import subprocess
+import time
+import docker
 
 
 VOLUME_GROUP = 'schains'
@@ -7,6 +9,12 @@ DRIVER = 'lvmpy'
 SIZE = 200
 IMAGE = 'pytest-ubuntu'
 CONTAINER = 'pytest_lvmpy'
+
+NUMBER_OF_CONTAINERS = 6
+ITERATIONS = 20
+
+
+client = docker.client.from_env()
 
 
 def test_create_remove(capfd):
@@ -73,3 +81,40 @@ def test_create_docker_container(capfd):
 
     res = subprocess.run(['docker', 'volume', 'rm', VOLUME])
     assert res.returncode == 0
+
+
+def create_volumes():
+    volumes = [
+        client.volumes.create(name=f'test{i}', driver='lvmpy', driver_opts={})
+        for i in range(NUMBER_OF_CONTAINERS)
+    ]
+    for v in volumes:
+        print(v)
+
+
+def create_containers():
+    containers = [
+        client.containers.run(image=f'test',
+                              name=f'test{i}',
+                              detach=True,
+                              volumes={f'test{i}': {
+                                  'bind': '/data', 'mode': 'rw'}
+                              })
+        for i in range(NUMBER_OF_CONTAINERS)
+    ]
+    for c in containers:
+        print(c)
+    return containers
+
+
+def remove_containers(containers):
+    for c in containers:
+        c.remove(force=True)
+    print('Containers removed')
+
+
+def test_containers_creation():
+    create_volumes()
+    containers = create_containers()
+    time.sleep(15)
+    remove_containers(containers)

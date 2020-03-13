@@ -1,3 +1,7 @@
+tests/prepare.sh
 export PYTHONPATH=${PYTHONPATH}:.
 
-VOLUME_GROUP=test_schains PHYSICAL_VOLUME=/dev/sda py.test tests/ $@
+py.test tests/plugin_test.py
+VOLUME_GROUP=schains PHYSICAL_VOLUME=/dev/loop0 py.test tests/core_test.py $@
+
+tests/finalize.sh
