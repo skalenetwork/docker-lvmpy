@@ -94,7 +94,7 @@ def create_volumes():
 
 def create_containers():
     containers = [
-        client.containers.run(image=f'test',
+        client.containers.run(image=IMAGE,
                               name=f'test{i}',
                               detach=True,
                               volumes={f'test{i}': {
@@ -116,5 +116,14 @@ def remove_containers(containers):
 def test_containers_creation():
     create_volumes()
     containers = create_containers()
+    time.sleep(15)
+    remove_containers(containers)
+
+
+def test_docker_system_restart():
+    create_volumes()
+    containers = create_containers()
+    time.sleep(15)
+    subprocess.run(['systemctl', 'restart', 'docker'])
     time.sleep(15)
     remove_containers(containers)
