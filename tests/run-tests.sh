@@ -1,3 +1,4 @@
+set -e
 tests/prepare.sh
 export PYTHONPATH=${PYTHONPATH}:.
 
