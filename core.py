@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
+UNMOUNT_RETRIES_NUMBER = 5
 
 
 class LvmPyError(Exception):
@@ -42,14 +43,18 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
 
 
-def run_cmd(cmd):
-    res = subprocess.run(cmd)
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        cmd_line = ' '.join(cmd)
-        logger.error(f'Command {cmd_line} failed with {stderr}')
-        raise LvmPyError(f'Command {cmd_line} failed')
-    return res.stdout.decode('utf-8')
+def run_cmd(cmd, retries=1):
+    res = None
+    for retry in range(retries):
+        logger.info(f'Command {" ".join(cmd)} try {retry}')
+        res = subprocess.run(cmd)
+        if res.returncode == 0:
+            return res.stdout.decode('utf-8')
+        else:
+            stderr = res.stderr.decode('utf-8')
+            cmd_line = ' '.join(cmd)
+            logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
+    raise LvmPyError(f'Command {cmd_line} failed after {retries} tries')
 
 
 def volume_mountpoint(volume):
@@ -156,7 +161,7 @@ def mount(name):
 
 def unmount(name):
     with volume_lock:
-        run_cmd(['umount', volume_device(name)])
+        run_cmd(['umount', volume_device(name)], retries=UNMOUNT_RETRIES_NUMBER)
 
 
 def path(name):
