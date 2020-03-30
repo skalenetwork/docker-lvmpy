@@ -1,5 +1,8 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
+RUN apt update && apt install sudo && sudo apt install btrfs-progs --yes
 
-RUN apt-get update && apt-get install -y btrfs-progs 
 
-CMD ["sleep 20"] 
+RUN mkdir /app
+WORKDIR /app
+COPY run.sh .
+CMD [ "bash", "run.sh" ]
