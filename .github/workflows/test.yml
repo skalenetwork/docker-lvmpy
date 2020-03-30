@@ -24,3 +24,4 @@ jobs:
     - name: Run tests
       run: |
         sudo env "PATH=$PATH" ./tests/run-tests.sh
+	cat /var/log/docker-lvmpy/lvmpy.log
