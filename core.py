@@ -116,7 +116,6 @@ def create(name, size):
     logger.info(f'Creating volume with size {size}')
     with volume_lock:
         run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
-        logger.info('IVD DAROVA')
         res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
         if res.returncode != 0:
             stderr = res.stderr.decode('utf-8')
@@ -141,8 +140,10 @@ def remove(name):
 
 
 def mount(name):
+    logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
+        logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name)
     if not os.path.exists(mountpoint):
         with volume_lock:
