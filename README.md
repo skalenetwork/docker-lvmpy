@@ -10,6 +10,22 @@ A simple volume driver for lvm volumes written in python.
 PHYSICAL_VOLUME='/dev/volume' VOLUME_GROUP=volume_group scripts/install.sh
 ```
 
+## Testing
+### Install requirements
+```bash
+    pip install -r requirements-dev.txt
+```
+
+### Run tests
+```bash
+tests/run-tests.sh
+```
+
+### Specify block device to install driver
+```bash
+BLOCK_DEVICE=/dev/sss tests/run-tests.sh
+```
+
 ## License
 
 [![License](https://img.shields.io/github/license/skalenetwork/docker-lvmpy.svg)](LICENSE)
