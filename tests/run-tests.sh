@@ -1,5 +1,5 @@
 set -e
-source tests/prepare.sh
+. tests/prepare.sh
 export PYTHONPATH=${PYTHONPATH}:.
 
 py.test tests/plugin_test.py
