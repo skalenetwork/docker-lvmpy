@@ -23,4 +23,4 @@ jobs:
         flake8 .
     - name: Run tests
       run: |
-        bash ./tests/run-tests.sh
+        sudo env "PATH=$PATH" ./tests/run-tests.sh
