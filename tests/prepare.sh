@@ -4,9 +4,8 @@ if [ -z ${BLOCK_DEVICE} ]; then
     losetup -fP loopbackfile.img
     losetup -a
     echo 'Block device created from file'
-    echo 'Installing docker-lvmpy'
-    VOLUME_GROUP=schains PHYSICAL_VOLUME=/dev/loop0 scripts/install.sh
-else
-    echo 'Installing docker-lvmpy'
-    VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE scripts/install.sh
+    BLOCK_DEVICE="$(losetup --list -a | grep loopbackfile.img |  awk '{print $1}')"
+    export BLOCK_DEVICE
 fi
+echo 'Installing docker-lvmpy'
+VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE scripts/install.sh
