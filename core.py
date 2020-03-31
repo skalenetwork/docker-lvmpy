@@ -20,9 +20,9 @@
 import logging
 import os
 import subprocess
-from threading import Lock
-
+import time
 from functools import partial
+from threading import Lock
 
 from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
 UNMOUNT_RETRIES_NUMBER = 5
+TIMEOUT = 2
 
 
 class LvmPyError(Exception):
@@ -54,6 +55,7 @@ def run_cmd(cmd, retries=1):
             stderr = res.stderr.decode('utf-8')
             cmd_line = ' '.join(cmd)
             logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
+            time.sleep(TIMEOUT)
     raise LvmPyError(f'Command {cmd_line} failed after {retries} tries')
 
 
