@@ -1,5 +1,8 @@
 set -e
 
+: "${PHYSICAL_VOLUME?Need to set PHYSICAL_VOLUME}"
+: "${VOLUME_GROUP?Need to set VOLUME_GROUP}"
+
 CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/

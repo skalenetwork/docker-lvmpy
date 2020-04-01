@@ -64,8 +64,10 @@ def test_create_docker_container(capfd):
     assert res.returncode == 0
     res = subprocess.run(['docker', 'volume', 'create', '-d', DRIVER,
                           '--opt', f'size={SIZE}M', '--name', VOLUME])
+
     assert res.returncode == 0
-    res = subprocess.run(['docker', 'run', '-d', f'--name={CONTAINER}', '-v',
+    res = subprocess.run(['docker', 'run', '--cap-add', 'SYS_ADMIN',
+                          '-d', f'--name={CONTAINER}', '-v',
                           f'{VOLUME}://btrfs//', IMAGE, 'sleep', '10'])
     assert res.returncode == 0
     res = subprocess.run(['docker', 'exec', CONTAINER,
@@ -97,6 +99,7 @@ def create_containers():
         client.containers.run(image=IMAGE,
                               name=f'test{i}',
                               detach=True,
+                              cap_add=['SYS_ADMIN'],
                               volumes={f'test{i}': {
                                   'bind': '/data', 'mode': 'rw'}
                               })

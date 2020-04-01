@@ -163,7 +163,8 @@ def mount(name):
 
 def unmount(name):
     with volume_lock:
-        run_cmd(['umount', volume_device(name)], retries=UNMOUNT_RETRIES_NUMBER)
+        run_cmd(['umount', volume_device(name)],
+                retries=UNMOUNT_RETRIES_NUMBER)
 
 
 def path(name):
