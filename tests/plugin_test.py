@@ -11,7 +11,7 @@ IMAGE = 'pytest-ubuntu'
 CONTAINER = 'pytest_lvmpy'
 
 NUMBER_OF_CONTAINERS = 6
-ITERATIONS = 20
+ITERATIONS = 5
 
 
 client = docker.client.from_env()
@@ -116,6 +116,16 @@ def remove_containers(containers):
     print('Containers removed')
 
 
+def restart_containers(containers):
+    for c in containers:
+        c.restart()
+    print('Containers restarted')
+
+
+def running_containers_number():
+    return len(client.containers.list())
+
+
 def test_containers_creation():
     create_volumes()
     containers = create_containers()
@@ -124,9 +134,14 @@ def test_containers_creation():
 
 
 def test_docker_system_restart():
-    create_volumes()
-    containers = create_containers()
-    time.sleep(15)
-    subprocess.run(['systemctl', 'restart', 'docker'])
-    time.sleep(15)
-    remove_containers(containers)
+    for iteration in range(ITERATIONS):
+        create_volumes()
+        containers = create_containers()
+        time.sleep(15)
+        subprocess.run(['systemctl', 'restart', 'docker'])
+        time.sleep(15)
+        restart_containers(containers)
+        time.sleep(15)
+        assert running_containers_number() == NUMBER_OF_CONTAINERS, iteration
+        time.sleep(15)
+        remove_containers(containers)
