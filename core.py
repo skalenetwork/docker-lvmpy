@@ -150,7 +150,7 @@ def mount(name):
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
-        logger.warning(f'IVD Volume {name} is already mounted on {mountpoint}')
+        logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name)
     if not os.path.exists(mountpoint):
         with volume_lock:
