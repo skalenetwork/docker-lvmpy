@@ -20,7 +20,9 @@
 import logging
 import os
 import subprocess
+import time
 from functools import partial
+from threading import Lock
 
 from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
 
@@ -28,15 +30,33 @@ logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
+UNMOUNT_RETRIES_NUMBER = 5
+TIMEOUT = 2
 
 
 class LvmPyError(Exception):
     pass
 
 
-# TODO: refactor to remove redundant boilerplate related to exception handling
+volume_lock = Lock()
+
 subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
+
+
+def run_cmd(cmd, retries=1):
+    res = None
+    for retry in range(retries):
+        logger.info(f'Command {" ".join(cmd)} try {retry}')
+        res = subprocess.run(cmd)
+        if res.returncode == 0:
+            return res.stdout.decode('utf-8')
+        else:
+            stderr = res.stderr.decode('utf-8')
+            cmd_line = ' '.join(cmd)
+            logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
+            time.sleep(TIMEOUT)
+    raise LvmPyError(f'Command {cmd_line} failed after {retries} tries')
 
 
 def volume_mountpoint(volume):
@@ -56,13 +76,7 @@ def lsblk_device(volume):
 
 
 def physical_volumes():
-    res = subprocess.run(['pvs', '-o', 'name'])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Getting physiscal volumes list failed {stderr}')
-        raise LvmPyError('Getting physiscal volumes list failed')
-
-    stdout = res.stdout.decode('utf-8')
+    stdout = run_cmd(['pvs', '-o', 'name'])
     pvs = list(filter(
         None,
         map(lambda x: x.strip(), stdout.split('\n'))
@@ -76,11 +90,8 @@ def ensure_physical_volume(physical_volume=PHYSICAL_VOLUME):
         logger.warning(f'Physical volume {physical_volume} already created')
         return
 
-    res = subprocess.run(['pvcreate', physical_volume, '-y'])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Physical volume creation failed with {stderr}')
-        raise LvmPyError('Phisical volume creation failed')
+    with volume_lock:
+        run_cmd(['pvcreate', physical_volume, '-y'])
 
 
 def volume_groups():
@@ -104,39 +115,35 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         logger.warning(f'Volume group {name} already created')
         return
 
-    res = subprocess.run(['vgcreate', name, physical_volume])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Creating volume group {name} failed with {stderr}')
-        raise LvmPyError('Volume group creation failed')
+    with volume_lock:
+        run_cmd(['vgcreate', name, physical_volume])
 
 
 def create(name, size):
     logger.info(f'Creating volume with size {size}')
-    res = subprocess.run(['lvcreate', '-L', f'{size}B',
-                          '-n', name, VOLUME_GROUP])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Creating {name} failed with {stderr}')
-        raise LvmPyError('Volume creation failed')
+    with volume_lock:
+        run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
+        res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
+        if res.returncode != 0:
+            stderr = res.stderr.decode('utf-8')
+            cmd_line = ' '.join(res.args)
+            logger.error(f'Command {cmd_line} failed with {stderr}')
 
-    res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Formating {name} as btrfs failed with {stderr}')
-        remove(name)
-        raise LvmPyError('Formating failed')
+            # Remove
+            mountpoint = volume_mountpoint(name)
+            if os.path.ismount(mountpoint):
+                run_cmd(['umount', volume_device(name)])
+            run_cmd(['lvremove', '-f', volume_device(name)])
+
+            raise LvmPyError(f'Command {cmd_line} failed')
 
 
 def remove(name):
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
         unmount(name)
-    res = subprocess.run(['lvremove', '-f', volume_device(name)])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Removing {name} failed with {stderr}')
-        raise LvmPyError('Removing failed')
+    with volume_lock:
+        run_cmd(['lvremove', '-f', volume_device(name)])
 
 
 def mount(name):
@@ -146,42 +153,22 @@ def mount(name):
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name)
     if not os.path.exists(mountpoint):
-        res = subprocess.run(['mkdir', mountpoint])
-        if res.returncode != 0:
-            stderr = res.stderr.decode('utf-8')
-            logger.error(f'Mountpoint creation for {name} '
-                         f'failed with {stderr}')
-            raise LvmPyError('Mountpoint creation failed')
+        with volume_lock:
+            run_cmd(['mkdir', mountpoint])
 
-    res = subprocess.run([
-        'mount', volume_device(name), mountpoint],
-        stdout=subprocess.PIPE
-    )
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Mounting {name} failed with {stderr}')
-        raise LvmPyError('Mounting failed')
+    with volume_lock:
+        run_cmd(['mount', volume_device(name), mountpoint])
     return mountpoint
 
 
 def unmount(name):
-    logger.info(f'Unmounting volume {name}')
-    res = subprocess.run(['umount', volume_device(name)])
-    if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Unmounting {name} failed with {stderr}')
-        raise LvmPyError('Unmounting failed')
+    with volume_lock:
+        run_cmd(['umount', volume_device(name)],
+                retries=UNMOUNT_RETRIES_NUMBER)
 
 
 def path(name):
-    res = subprocess.run(['findmnt', volume_device(name),
-                          '--output', 'source'])
-    if res.returncode != 0:
-        stderr = res.stdout.decode('utf-8')
-        logger.error(f'Getting mountpoint for {name} failed with {stderr}')
-        raise LvmPyError('Getting mountpoint for volume failed')
-
-    stdout = res.stdout.decode('utf-8')
+    stdout = run_cmd(['findmnt', volume_device(name), '--output', 'source'])
     if not stdout:
         return None
 
@@ -190,14 +177,7 @@ def path(name):
 
 
 def volumes():
-    res = subprocess.run(['lvs', '-o', 'name',
-                          '-S', f'vg_name={VOLUME_GROUP}'])
-    if res.returncode != 0:
-        stderr = res.stdout.decode('utf-8')
-        logger.error(f'Getting volumes list failed with {stderr}')
-        raise LvmPyError('Getting volumes list failed')
-
-    stdout = res.stdout.decode('utf-8')
+    stdout = run_cmd(['lvs', '-o', 'name', '-S', f'vg_name={VOLUME_GROUP}'])
     lvs = list(filter(
         None,
         map(lambda x: x.strip(), stdout.split('\n'))
