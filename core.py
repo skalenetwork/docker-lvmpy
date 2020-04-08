@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
 UNMOUNT_RETRIES_NUMBER = 5
-TIMEOUT = 2
+DEFAULT_TIMEOUT = 2
 
 
 class LvmPyError(Exception):
@@ -44,7 +44,7 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
 
 
-def run_cmd(cmd, retries=1):
+def run_cmd(cmd, retries=1, timeout=DEFAULT_TIMEOUT):
     res = None
     for retry in range(retries):
         logger.info(f'Command {" ".join(cmd)} try {retry}')
@@ -55,7 +55,7 @@ def run_cmd(cmd, retries=1):
             stderr = res.stderr.decode('utf-8')
             cmd_line = ' '.join(cmd)
             logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
-            time.sleep(TIMEOUT)
+            time.sleep(timeout)
     raise LvmPyError(f'Command {cmd_line} failed after {retries} tries')
 
 
