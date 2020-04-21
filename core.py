@@ -115,6 +115,8 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         logger.warning(f'Volume group {name} already created')
         return
 
+    ensure_physical_volume(physical_volume=physical_volume)
+
     with volume_lock:
         run_cmd(['vgcreate', name, physical_volume])
 
