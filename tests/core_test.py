@@ -113,4 +113,4 @@ def test_mountpoint_users(vg):
     remove(SECOND_VOLUME_NAME)
 
     assert isinstance(mountpoint_consumers_running, list)
-    assert len(mountpoint_consumers_finished) == []
+    assert mountpoint_consumers_finished == []
