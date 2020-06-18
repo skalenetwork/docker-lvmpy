@@ -24,14 +24,19 @@ import time
 from functools import partial
 from threading import Lock
 
+import psutil
+
 from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
 
 logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
-UNMOUNT_RETRIES_NUMBER = 5
-DEFAULT_TIMEOUT = 2
+UNMOUNT_RETRIES_NUMBER = 10
+
+
+def compose_exponantional_timeouts(retries=1):
+    return [2 ** power for power in range(retries)]
 
 
 class LvmPyError(Exception):
@@ -44,9 +49,10 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
 
 
-def run_cmd(cmd, retries=1, timeout=DEFAULT_TIMEOUT):
+def run_cmd(cmd, retries=1):
     res = None
-    for retry in range(retries):
+    timeouts = compose_exponantional_timeouts(retries)
+    for retry, timeout in enumerate(timeouts):
         logger.info(f'Command {" ".join(cmd)} try {retry}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
@@ -146,6 +152,8 @@ def remove(name):
         unmount(name)
     with volume_lock:
         run_cmd(['lvremove', '-f', volume_device(name)])
+    if os.path.exists(mountpoint):
+        os.rmdir(mountpoint)
 
 
 def mount(name):
@@ -163,7 +171,45 @@ def mount(name):
     return mountpoint
 
 
+def path_user(volume_path):
+    res = subprocess.run(['fuser', volume_path])
+    if res.returncode == 0:
+        str_pids = res.stdout.decode('utf-8').strip().split()
+        return list(map(int, str_pids))
+    else:
+        return []
+
+
+def device_users(name):
+    path = volume_device(name)
+    return path_user(path)
+
+
+def mountpoint_users(name):
+    path = volume_mountpoint(name)
+    return path_user(path)
+
+
+def process_info(pid):
+    ps = psutil.Process(pid)
+    return ps.as_dict()
+
+
+def log_consumers(consumers):
+    for pid in consumers:
+        logger.info(f'PID {pid}: {process_info(pid)}')
+
+
 def unmount(name):
+    device_consumers = device_users(name)
+    logger.info(f'Device is used by len(device_consumers): {device_consumers}')
+
+    mountpoint_consumers = mountpoint_users(name)
+    logger.info(f'Mountpoint is used by len(mountpoint_consumers): '
+                f'{mountpoint_consumers}')
+    for pid in mountpoint_consumers:
+        logger.info(f'PID {pid}: {process_info(pid)}')
+
     with volume_lock:
         run_cmd(['umount', volume_device(name)],
                 retries=UNMOUNT_RETRIES_NUMBER)
@@ -174,8 +220,8 @@ def path(name):
     if not stdout:
         return None
 
-    mountpoint = list(filter(None, stdout.split('\n')))[1]
-    return mountpoint
+    result = list(filter(None, stdout.split('\n')))[1]
+    return result
 
 
 def volumes():

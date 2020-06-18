@@ -19,6 +19,8 @@
 
 import json
 import logging
+from logging import StreamHandler
+from logging.handlers import RotatingFileHandler
 
 from flask import Flask, request, Response
 
@@ -38,8 +40,8 @@ from config import LOG_PATH
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-    handlers=[logging.StreamHandler(),
-              logging.FileHandler(LOG_PATH)],
+    handlers=[StreamHandler(),
+              RotatingFileHandler(LOG_PATH)],
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
