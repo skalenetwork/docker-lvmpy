@@ -2,6 +2,7 @@ import os
 import time
 from multiprocessing import Process
 
+import mock
 import pytest
 
 from core import (
@@ -9,6 +10,7 @@ from core import (
     mount, path, unmount,
     get as get_volume,
     device_users,
+    file_users,
     mountpoint_users,
     volume_mountpoint
 )
@@ -39,8 +41,11 @@ def test_create_remove(vg):
 
 
 def test_remove_not_existing(vg):
-    with pytest.raises(LvmPyError):
-        remove('Not-existing-volume')
+    def timeouts_mock(retries):
+        return [1 for _ in range(retries)]
+    with mock.patch('core.compose_exponantional_timeouts', timeouts_mock):
+        with pytest.raises(LvmPyError):
+            remove('Not-existing-volume')
 
 
 def test_create_small_size(vg):
@@ -114,3 +119,18 @@ def test_mountpoint_users(vg):
 
     assert isinstance(mountpoint_consumers_running, list)
     assert mountpoint_consumers_finished == []
+
+
+def test_file_users(vg):
+    create(SECOND_VOLUME_NAME, '250m')
+
+    p = Process(target=aquire_volume, args=(SECOND_VOLUME_NAME,))
+    p.start()
+    time.sleep(3)
+    file_consumers_running = file_users(SECOND_VOLUME_NAME)
+    p.join()
+    file_consumers_finished = file_users(SECOND_VOLUME_NAME)
+    remove(SECOND_VOLUME_NAME)
+
+    assert isinstance(file_consumers_running, list)
+    assert file_consumers_finished == []

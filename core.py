@@ -56,13 +56,14 @@ def run_cmd(cmd, retries=1):
         logger.info(f'Command {" ".join(cmd)} try {retry}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
+            logger.info(f'Command {" ".join(cmd)} success')
             return res.stdout.decode('utf-8')
         else:
             stderr = res.stderr.decode('utf-8')
             cmd_line = ' '.join(cmd)
             logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
             time.sleep(timeout)
-    raise LvmPyError(f'Command {cmd_line} failed after {retries} tries')
+    raise LvmPyError(f'Command {cmd_line} failed after {retries} retries')
 
 
 def volume_mountpoint(volume):
@@ -131,19 +132,13 @@ def create(name, size):
     logger.info(f'Creating volume with size {size}')
     with volume_lock:
         run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
-        res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
-        if res.returncode != 0:
-            stderr = res.stderr.decode('utf-8')
-            cmd_line = ' '.join(res.args)
-            logger.error(f'Command {cmd_line} failed with {stderr}')
-
-            # Remove
-            mountpoint = volume_mountpoint(name)
-            if os.path.ismount(mountpoint):
-                run_cmd(['umount', volume_device(name)])
-            run_cmd(['lvremove', '-f', volume_device(name)])
-
-            raise LvmPyError(f'Command {cmd_line} failed')
+    res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
+    if res.returncode != 0:
+        stderr = res.stderr.decode('utf-8')
+        cmd_line = ' '.join(res.args)
+        logger.error(f'Command {cmd_line} failed with {stderr}')
+        remove(name)
+        raise LvmPyError(f'Command {cmd_line} failed')
 
 
 def remove(name):
@@ -163,21 +158,29 @@ def mount(name):
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name)
     if not os.path.exists(mountpoint):
-        with volume_lock:
-            run_cmd(['mkdir', mountpoint])
+        run_cmd(['mkdir', mountpoint])
 
     with volume_lock:
         run_cmd(['mount', volume_device(name), mountpoint])
     return mountpoint
 
 
-def path_user(volume_path):
-    res = subprocess.run(['fuser', volume_path])
+def path_user(path):
+    res = subprocess.run(['fuser', path])
     if res.returncode == 0:
         str_pids = res.stdout.decode('utf-8').strip().split()
         return list(map(int, str_pids))
     else:
         return []
+
+
+def file_in_path_user(path):
+    files = os.listdir(path)
+    if len(files) == 0:
+        return []
+    filepath = os.path.join(os.getcwd(), files[0])
+    logger.info(f'Checking filepath {filepath} ...')
+    return path_user(filepath)
 
 
 def device_users(name):
@@ -190,6 +193,11 @@ def mountpoint_users(name):
     return path_user(path)
 
 
+def file_users(name):
+    path = volume_mountpoint(name)
+    return file_in_path_user(path)
+
+
 def process_info(pid):
     ps = psutil.Process(pid)
     return ps.as_dict()
@@ -197,18 +205,25 @@ def process_info(pid):
 
 def log_consumers(consumers):
     for pid in consumers:
-        logger.info(f'PID {pid}: {process_info(pid)}')
+        info = process_info(pid)
+        logger.info(f'PID {pid}: {info}')
 
 
 def unmount(name):
     device_consumers = device_users(name)
-    logger.info(f'Device is used by len(device_consumers): {device_consumers}')
+    logger.info(f'Device is used by {len(device_consumers)}: '
+                f'{device_consumers}')
+    log_consumers(device_consumers)
 
     mountpoint_consumers = mountpoint_users(name)
-    logger.info(f'Mountpoint is used by len(mountpoint_consumers): '
+    logger.info(f'Mountpoint is used by {len(mountpoint_consumers)}: '
                 f'{mountpoint_consumers}')
-    for pid in mountpoint_consumers:
-        logger.info(f'PID {pid}: {process_info(pid)}')
+    log_consumers(mountpoint_consumers)
+
+    file_consumers = file_users(name)
+    logger.info(f'File is used by {len(file_consumers)}: '
+                f'{file_consumers}')
+    log_consumers(file_consumers)
 
     with volume_lock:
         run_cmd(['umount', volume_device(name)],

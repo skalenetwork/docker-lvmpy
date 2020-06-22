@@ -11,7 +11,7 @@ IMAGE = 'pytest-ubuntu'
 CONTAINER = 'pytest_lvmpy'
 
 NUMBER_OF_CONTAINERS = 6
-ITERATIONS = 5
+ITERATIONS = 2
 
 
 client = docker.client.from_env()
