@@ -10,7 +10,7 @@ DRIVER_CONFIG=/etc/docker-lvmpy/
 LOG_PATH=/var/log/docker-lvmpy/
 
 apt update
-apt install python3-dev python3-pip -y
+apt install auditd python3-dev python3-pip -y
 
 mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG $LOG_PATH
 

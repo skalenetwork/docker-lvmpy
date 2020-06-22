@@ -1,5 +1,6 @@
 import subprocess
 import time
+from concurrent.futures import ProcessPoolExecutor
 import docker
 
 
@@ -11,13 +12,13 @@ IMAGE = 'pytest-ubuntu'
 CONTAINER = 'pytest_lvmpy'
 
 NUMBER_OF_CONTAINERS = 6
-ITERATIONS = 5
+ITERATIONS = 2
 
 
 client = docker.client.from_env()
 
 
-def test_create_remove(capfd):
+def test_create_remove_docker_cli_info(capfd):
     res = subprocess.run(['docker', 'volume', 'create', '-d', DRIVER,
                           '--opt', f'size={SIZE}M', '--name', VOLUME])
     assert res.returncode == 0
@@ -90,8 +91,12 @@ def create_volumes():
         client.volumes.create(name=f'test{i}', driver='lvmpy', driver_opts={})
         for i in range(NUMBER_OF_CONTAINERS)
     ]
-    for v in volumes:
-        print(v)
+    return volumes
+
+
+def remove_volumes(volumes):
+    for volume in volumes:
+        volume.remove(force=True)
 
 
 def create_containers():
@@ -127,10 +132,38 @@ def running_containers_number():
 
 
 def test_containers_creation():
-    create_volumes()
+    volumes = create_volumes()
     containers = create_containers()
     time.sleep(15)
     remove_containers(containers)
+    remove_volumes(volumes)
+
+
+def create_remove_volume(name):
+    sleep_interval = 2
+    iterations = 10
+    for i in range(iterations):
+        volume = client.volumes.create(name=name, driver='lvmpy', driver_opts={})
+        time.sleep(sleep_interval)
+        volume.remove(force=True)
+        time.sleep(sleep_interval)
+
+
+def test_concurrent_volume_creation():
+    assert client.volumes.list() == []
+    thread_number = 20
+    max_workers = 5
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(
+                create_remove_volume,
+                f'test{i}'
+            )
+            for i in range(thread_number)
+        ]
+        for future in futures:
+            future.result()
+    assert client.volumes.list() == []
 
 
 def test_docker_system_restart():
