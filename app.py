@@ -23,7 +23,6 @@ import logging
 from flask import Flask, request, Response
 
 from core import (
-    ensure_physical_volume,
     ensure_volume_group,
     create as create_volume,
     remove as remove_volume,
@@ -32,7 +31,7 @@ from core import (
     path as volume_path,
     get as get_volume,
     volumes as list_volumes,
-    LvmPyError,
+    LvmPyError
 )
 from config import LOG_PATH
 
@@ -67,7 +66,6 @@ def error(err, code=400):
 
 @app.before_first_request
 def enusre_lvm():
-    ensure_physical_volume()
     ensure_volume_group()
 
 
