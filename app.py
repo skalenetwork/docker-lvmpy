@@ -19,6 +19,8 @@
 
 import json
 import logging
+from logging import StreamHandler
+from logging.handlers import RotatingFileHandler
 
 from flask import Flask, request, Response
 
@@ -33,20 +35,26 @@ from core import (
     volumes as list_volumes,
     LvmPyError
 )
-from config import LOG_PATH
+from config import LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES, LOG_FORMAT, LOG_PATH
 
 
 logging.basicConfig(
-    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-    handlers=[logging.StreamHandler(),
-              logging.FileHandler(LOG_PATH)],
+    format=LOG_FORMAT,
+    handlers=[
+        StreamHandler(),
+        RotatingFileHandler(
+            LOG_PATH, maxBytes=LOG_FILE_SIZE_BYTES,
+            backupCount=LOG_BACKUP_COUNT
+        )
+    ],
     level=logging.INFO
 )
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 PORT = 7373
 DEFAULT_SIZE = '256m'
 
