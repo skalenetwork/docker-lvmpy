@@ -101,7 +101,6 @@ def test_device_users(vg):
     device_consumers_finished = device_users(FIRST_VOLUME_NAME)
     remove(FIRST_VOLUME_NAME)
 
-    # assert len(device_consumers_running) > 0
     assert isinstance(device_consumers_running, list)
     assert device_consumers_finished == []
 
