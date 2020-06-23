@@ -28,4 +28,4 @@ LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
 LOG_FILE_SIZE_MB = 100
 LOG_FILE_SIZE_BYTES = LOG_FILE_SIZE_MB * 1000001
 LOG_BACKUP_COUNT = 3
-LOG_FORMAT = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+LOG_FORMAT = '[%(asctime)s %(levelname)s] %(name)s - %(threadName)s - %(message)s'
