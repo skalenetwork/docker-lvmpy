@@ -147,7 +147,9 @@ def remove(name):
         unmount(name)
     with volume_lock:
         run_cmd(['lvremove', '-f', volume_device(name)])
+    logger.info(f'Checking if we need to remove {mountpoint}')
     if os.path.exists(mountpoint):
+        logger.info(f'Removing {mountpoint}')
         os.rmdir(mountpoint)
 
 
