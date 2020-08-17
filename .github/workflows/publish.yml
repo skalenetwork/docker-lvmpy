@@ -19,10 +19,12 @@ jobs:
       with:
         python-version: 3.7
     - name: Calculate version
+      run: |
+        export BRANCH=${GITHUB_REF##*/}
+        echo "Branch $BRANCH"
         export VERSION=$(bash ./scripts/calculate_version.sh)
         echo "::set-env name=VERSION::$VERSION"
         echo "Version $VERSION"
-        export RELEASE=true
     - name: Checkout code
       uses: actions/checkout@master
     - name: Create Release
