@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
+
 VERSION=$(cat VERSION)
 USAGE_MSG='Usage: BRANCH=[BRANCH] calculate_version.sh'
 
