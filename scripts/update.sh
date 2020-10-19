@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 : "${PHYSICAL_VOLUME?Need to set PHYSICAL_VOLUME}"
