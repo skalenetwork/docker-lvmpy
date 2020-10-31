@@ -1,2 +1,2 @@
 Flask==1.0.2
-psutil==5.7.2
+psutil==5.7.3
