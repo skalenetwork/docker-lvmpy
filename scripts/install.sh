@@ -4,6 +4,8 @@ set -e
 : "${PHYSICAL_VOLUME?Need to set PHYSICAL_VOLUME}"
 : "${VOLUME_GROUP?Need to set VOLUME_GROUP}"
 
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/
@@ -18,6 +20,7 @@ mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG $LOG_PATH
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true
 
+cd $BASE_DIR
 cp docker/lvmpy.json $DOCKER_PLUGIN_CONFIG
 cp systemd/docker-lvmpy.service $SYSTEMD_CONFIG_PATH
 cp app.py core.py config.py requirements.txt $CODE_PATH
