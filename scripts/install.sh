@@ -4,6 +4,8 @@ set -e
 : "${PHYSICAL_VOLUME?Need to set PHYSICAL_VOLUME}"
 : "${VOLUME_GROUP?Need to set VOLUME_GROUP}"
 
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+BASE_DIR="$(dirname "$CURRENT_DIR")"
 CODE_PATH=/opt/docker-lvmpy/
 DOCKER_PLUGIN_CONFIG=/etc/docker/plugins/
 SYSTEMD_CONFIG_PATH=/etc/systemd/system/
