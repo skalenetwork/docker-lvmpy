@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
 echo "Disable docker-lvmpy service"
 systemctl disable docker-lvmpy
 echo "Removing all volumes from schain volume group"
