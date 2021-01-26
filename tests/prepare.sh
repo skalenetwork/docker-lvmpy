@@ -4,7 +4,7 @@ if [ ${START_OPERATION} == 'update']; then
 else
     if [ -z ${BLOCK_DEVICE} ]; then
         echo 'Creating loopback block device'
-        dd if=/dev/zero of=loopbackfile.img bs=200M count=10
+        dd if=/dev/zero of=loopbackfile.img bs=400M count=10
         losetup -fP loopbackfile.img
         losetup -a
         echo 'Block device created from file'
