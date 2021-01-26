@@ -10,7 +10,7 @@ vgremove schains
 echo "Cleaning up $BLOCK_DEVICE"
 pvremove $BLOCK_DEVICE
 echo "Unmount $BLOCK_DEVICE"
-umount -q $BLOCK_DEVICE
+umount $BLOCK_DEVICE || true
 
 BLOCK_DEVICE="$(losetup --list -a | grep loopbackfile.img |  awk '{print $1}')"
 if [ ! -z ${BLOCK_DEVICE} ]; then
