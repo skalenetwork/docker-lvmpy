@@ -11,7 +11,7 @@ def test_healthcheck(vg):
 
 @mock.patch('healthcheck.create_volume',
             side_effect=LvmPyError('Test error'))
-def test_healthcheck_creation_failed(vg):
+def test_healthcheck_creation_failed(create_volume_mock, vg):
     result = healthcheck(vg)
     assert result == {
         'status': 'error',
@@ -22,7 +22,8 @@ def test_healthcheck_creation_failed(vg):
 @mock.patch('healthcheck.create_volume')
 @mock.patch('healthcheck.remove_volume',
             side_effect=LvmPyError('Test error'))
-def test_healthcheck_removing_failed(vg):
+def test_healthcheck_removing_failed(create_volume_mock,
+                                     remove_volume_mock, vg):
     result = healthcheck(vg)
     assert result == {
         'status': 'error',
