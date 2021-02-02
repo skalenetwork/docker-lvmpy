@@ -5,8 +5,10 @@ from core import (
     remove as remove_volume
 )
 
+MIN_BTRFS_VOLUME_SIZE = 209715200
 
-def healthcheck(volume_group: str, size: int = 47185920) -> dict:
+
+def healthcheck(volume_group: str, size: int = MIN_BTRFS_VOLUME_SIZE) -> dict:
     volume_name = 'healthcheck-volume'
     try:
         create_volume(volume_name, size=size)
