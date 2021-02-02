@@ -19,10 +19,12 @@
 
 import json
 import logging
+import time
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, request, Response
+from flask import Flask, Response, g, request
+from werkzeug.exceptions import InternalServerError
 
 from core import (
     ensure_volume_group,
@@ -59,22 +61,40 @@ PORT = 7373
 DEFAULT_SIZE = '256m'
 
 
-def response(data, code):
+def response(data: dict, code: int) -> Response:
     return Response(response=json.dumps(data),
                     status=code, mimetype='application/json')
 
 
-def ok(out_data={}):
+def ok(out_data: dict = {}):
     return response({**out_data, 'Err': ''}, 200)
 
 
-def error(err, code=400):
+def error(err, code: int = 400):
     return response({'Err': err}, code)
+
+
+@app.errorhandler(InternalServerError)
+def handle_500(e):
+    original = getattr(e, "original_exception", None)
+    return error(err=original, code=500)
 
 
 @app.before_first_request
 def enusre_lvm():
     ensure_volume_group()
+
+
+@app.before_request
+def save_time():
+    g.start_time = time.time()
+
+
+@app.teardown_request
+def log_elapsed(response):
+    elapsed = round(time.time() - g.start_time, 2)
+    logger.info(f'Request elapsed time: {elapsed}s')
+    return response
 
 
 @app.route('/')

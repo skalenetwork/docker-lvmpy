@@ -44,8 +44,16 @@ echo 'Installing requirements ...'
 cd $CODE_PATH
 source venv/bin/activate
 pip install -r requirements.txt
+export PYTHONPATH=.
+python cleanup.py $PHYSICAL_VOLUME $VOLUME_GROUP
 
 echo 'Enabling service ...'
 systemctl daemon-reload
 systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
+
+
+echo 'Service is up'
+
+python healthcheck.py $VOLUME_GROUP
+echo 'Done'
