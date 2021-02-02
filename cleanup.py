@@ -15,7 +15,6 @@ def is_block_device_exist(block_device: str) -> bool:
 
 def is_lvmpy_environment_valid(block_device: str, volume_group: str) -> bool:
     pv = physical_volume_from_group(volume_group)
-    print('IVD', repr(block_device), repr(pv))
     lvs = volumes()
     return pv == block_device or lvs == []
 
