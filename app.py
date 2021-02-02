@@ -66,7 +66,9 @@ def response(data: dict, code: int) -> Response:
                     status=code, mimetype='application/json')
 
 
-def ok(out_data: dict = {}):
+def ok(out_data: dict):
+    if out_data is None:
+        out_data = {}
     return response({**out_data, 'Err': ''}, 200)
 
 
@@ -115,6 +117,7 @@ def create():
     if options is None:
         options = {}
     size_str = options.get('size') or DEFAULT_SIZE
+    logger.info(f'IVD size {size_str}')
 
     try:
         create_volume(name, size_str)
