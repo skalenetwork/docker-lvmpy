@@ -36,8 +36,7 @@ virtualenv --python=python3 venv
 . venv/bin/activate
 pip install -r requirements.txt
 export PYTHONPATH=$CODE_PATH
-echo PV $PHYSICAL_VOLUME : VG $VOLUME_GROUP
-python cleanup.py $PHYSICAL_VOLUME $VOLUME_GROUP
+python cleanup.py "$PHYSICAL_VOLUME" "$VOLUME_GROUP"
 
 echo 'Enabling service ...'
 systemctl daemon-reload
@@ -45,5 +44,5 @@ systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
 echo 'Service is up'
 
-python healthcheck.py $VOLUME_GROUP
+python healthcheck.py "$VOLUME_GROUP"
 echo 'Done'
