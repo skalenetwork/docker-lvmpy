@@ -36,7 +36,7 @@ echo 'Updating required files ...'
 cd $BASE_DIR
 cp docker/lvmpy.json $DOCKER_PLUGIN_CONFIG
 cp systemd/docker-lvmpy.service $SYSTEMD_CONFIG_PATH
-cp app.py core.py config.py requirements.txt $CODE_PATH
+cp app.py core.py config.py cleanup.py healthcheck.py requirements.txt $CODE_PATH
 echo "PHYSICAL_VOLUME=$PHYSICAL_VOLUME" > $DRIVER_CONFIG/lvm-environment
 echo "VOLUME_GROUP=$VOLUME_GROUP" >> $DRIVER_CONFIG/lvm-environment
 
