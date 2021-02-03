@@ -9,9 +9,9 @@ systemctl disable docker-lvmpy
 echo "Removing all volumes from schain volume group"
 lvremove schains --yes
 echo "Removing volume group schain"
-vgremove schains
+vgremove schains || true
 echo "Cleaning up $BLOCK_DEVICE"
-pvremove $BLOCK_DEVICE
+pvremove $BLOCK_DEVICE || true
 echo "Unmount $BLOCK_DEVICE"
 umount $BLOCK_DEVICE || true
 
