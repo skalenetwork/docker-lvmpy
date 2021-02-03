@@ -44,5 +44,5 @@ systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
 echo 'Service is up'
 
-python healthcheck.py "$VOLUME_GROUP"
+python healthcheck.py
 echo 'Done'

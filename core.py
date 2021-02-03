@@ -53,7 +53,7 @@ def run_cmd(cmd, retries=1):
     res = None
     timeouts = compose_exponantional_timeouts(retries)
     for retry, timeout in enumerate(timeouts):
-        logger.info(f'Command {" ".join(cmd)} try {retry}')
+        logger.info(f'Command {" ".join(cmd)} attempt {retry}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
             logger.info(f'Command {" ".join(cmd)} success')
@@ -62,10 +62,10 @@ def run_cmd(cmd, retries=1):
             stderr = res.stderr.decode('utf-8')
             cmd_line = ' '.join(cmd)
             logger.error(
-                f'Command {cmd_line} try {retry} failed with {stderr}'
+                f'Command {cmd_line} attempt {retry} failed with {stderr}'
             )
             time.sleep(timeout)
-    raise LvmPyError(f'Command {cmd_line} failed after {retries} retries')
+        raise LvmPyError(f'Command {cmd_line} failed, error: {stderr}')
 
 
 def volume_mountpoint(volume):

@@ -1,17 +1,28 @@
-import sys
-
-from core import (
-    create as create_volume,
-    remove as remove_volume
-)
+import docker
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
 
-def healthcheck(volume_group: str, size: int = MIN_BTRFS_VOLUME_SIZE) -> dict:
+client = docker.from_env()
+
+
+def create_volume_using_driver(name: str,
+                               size: int) -> docker.models.volumes.Volume:
+    return client.volumes.create(
+        name=name, driver='lvmpy',
+        driver_opts={'size': str(size)},
+    )
+
+
+def remove_volume_using_driver(volume: docker.models.volumes.Volume):
+    return volume.remove()
+
+
+def healthcheck(size: int = MIN_BTRFS_VOLUME_SIZE) -> dict:
     volume_name = 'healthcheck-volume'
+    volume = None
     try:
-        create_volume(volume_name, size=size)
+        volume = create_volume_using_driver(name=volume_name, size=size)
     except Exception as err:
         return {
             'status': 'error',
@@ -19,7 +30,7 @@ def healthcheck(volume_group: str, size: int = MIN_BTRFS_VOLUME_SIZE) -> dict:
         }
 
     try:
-        remove_volume(volume_name)
+        remove_volume_using_driver(volume)
     except Exception as err:
         return {
             'status': 'error',
@@ -30,10 +41,13 @@ def healthcheck(volume_group: str, size: int = MIN_BTRFS_VOLUME_SIZE) -> dict:
 
 
 def main():
-    volume_group = sys.argv[1]
-    result = healthcheck(volume_group)
+    result = healthcheck()
     if result['status'] == 'error':
-        print('Error: {result["data"]')
+        print(f'Error: {result["data"]}')
         exit(1)
     else:
         print('Healthcheck passed')
+
+
+if __name__ == '__main__':
+    main()

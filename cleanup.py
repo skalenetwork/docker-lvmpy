@@ -46,7 +46,7 @@ def main() -> None:
     if is_cleanup_needed(block_device, volume_group):
         print('Cleaning lvmpy artifacts ...')
         cleanup_lvmpy_aritifacts(volume_group)
-    print('Cleanup actions for lvmpy executed successfully')
+    print('Lvmpy cleanup actions for lvmpy executed successfully')
 
 
 if __name__ == '__main__':
