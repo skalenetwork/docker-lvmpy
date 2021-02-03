@@ -7,7 +7,7 @@ set -e
 echo "Disable docker-lvmpy service"
 systemctl disable docker-lvmpy
 echo "Removing all volumes from schain volume group"
-lvremove schains --yes
+lvremove schains --yes || true
 echo "Removing volume group schain"
 vgremove schains || true
 echo "Cleaning up $BLOCK_DEVICE"

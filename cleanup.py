@@ -5,7 +5,8 @@ from core import (
     remove_physical_volume,
     remove_volume_group,
     volume_groups,
-    volumes
+    volumes,
+    LvmPyError
 )
 
 
@@ -45,7 +46,11 @@ def main() -> None:
         exit(1)
     if is_cleanup_needed(block_device, volume_group):
         print('Cleaning lvmpy artifacts ...')
-        cleanup_lvmpy_aritifacts(volume_group)
+        try:
+            cleanup_lvmpy_aritifacts(volume_group)
+        except LvmPyError as err:
+            print(f'Cleaning failed with error: {err}')
+            exit(2)
     print('Lvmpy cleanup actions for lvmpy executed successfully')
 
 
