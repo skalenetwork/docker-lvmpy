@@ -21,6 +21,6 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 .
-    - name: Run install tests 
+    - name: Run tests 
       run: |
         sudo env "PATH=$PATH" ./tests/run-tests.sh

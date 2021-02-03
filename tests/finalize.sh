@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
+: "${BLOCK_DEVICE?non empty BLOCK_DEVICE option required}"
+
+
 echo "Disable docker-lvmpy service"
 systemctl disable docker-lvmpy
 echo "Removing all volumes from schain volume group"
-lvremove schains --yes
+lvremove schains --yes || true
 echo "Removing volume group schain"
-vgremove schains
+vgremove schains || true
 echo "Cleaning up $BLOCK_DEVICE"
-pvremove $BLOCK_DEVICE
+pvremove $BLOCK_DEVICE || true
 echo "Unmount $BLOCK_DEVICE"
 umount $BLOCK_DEVICE || true
 

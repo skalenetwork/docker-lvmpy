@@ -18,25 +18,18 @@ ITERATIONS = 2
 client = docker.client.from_env()
 
 
-def test_create_remove_docker_cli_info(capfd):
+def test_create_remove_docker_py_info(capfd):
     res = subprocess.run(['docker', 'volume', 'create', '-d', DRIVER,
                           '--opt', f'size={SIZE}M', '--name', VOLUME])
     assert res.returncode == 0
-    captured = capfd.readouterr()
 
-    res = subprocess.call(['docker', 'volume', 'ls'])
-    captured = capfd.readouterr()
-    lines = captured.out.split('\n')
-    assert f'{DRIVER}               {VOLUME}' in lines
+    assert VOLUME in [v.name for v in client.volumes.list()]
+    assert client.volumes.get(VOLUME).name == VOLUME
 
     res = subprocess.run(['docker', 'volume', 'remove', VOLUME])
     assert res.returncode == 0
-    captured = capfd.readouterr()
 
-    res = subprocess.call(['docker', 'volume', 'ls'])
-    captured = capfd.readouterr()
-    lines = captured.out.split('\n')
-    assert f'{DRIVER}               {VOLUME}' not in lines
+    assert VOLUME not in client.volumes.list()
 
 
 def test_create_remove_lsblk_info(capfd):
@@ -47,8 +40,10 @@ def test_create_remove_lsblk_info(capfd):
     res = subprocess.call(['lsblk', '-l', '-o', 'name,size,type'])
     captured = capfd.readouterr()
     lines = list(filter(None, captured.out.split('\n')))
-    expected = list(filter(None, lines[-1].split(' ')))
-    assert expected == [f'{VOLUME_GROUP}-{VOLUME}', f'{SIZE}M', 'lvm']
+    cleanuped_lines = list(
+        filter(None, map(lambda line: line.strip().split(), lines)))
+    expected = [f'{VOLUME_GROUP}-{VOLUME}', f'{SIZE}M', 'lvm']
+    assert expected in cleanuped_lines
 
     res = subprocess.run(['docker', 'volume', 'remove', VOLUME])
     assert res.returncode == 0
@@ -59,7 +54,7 @@ def test_create_remove_lsblk_info(capfd):
     assert f'{VOLUME_GROUP}-{VOLUME}' not in lines
 
 
-def test_create_docker_container(capfd):
+def test_container_exec_using_volume(capfd):
     res = subprocess.run(['docker', 'build', 'tests/container',
                           '--tag', IMAGE])
     assert res.returncode == 0
@@ -143,7 +138,10 @@ def create_remove_volume(name):
     sleep_interval = 2
     iterations = 10
     for i in range(iterations):
-        volume = client.volumes.create(name=name, driver='lvmpy', driver_opts={})
+        volume = client.volumes.create(
+            name=name,
+            driver='lvmpy', driver_opts={}
+        )
         time.sleep(sleep_interval)
         volume.remove(force=True)
         time.sleep(sleep_interval)
@@ -168,7 +166,7 @@ def test_concurrent_volume_creation():
 
 def test_docker_system_restart():
     for iteration in range(ITERATIONS):
-        create_volumes()
+        volumes = create_volumes()
         containers = create_containers()
         time.sleep(15)
         subprocess.run(['systemctl', 'restart', 'docker'])
@@ -178,3 +176,4 @@ def test_docker_system_restart():
         assert running_containers_number() == NUMBER_OF_CONTAINERS, iteration
         time.sleep(15)
         remove_containers(containers)
+        remove_volumes(volumes)

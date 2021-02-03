@@ -35,7 +35,7 @@ LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
 UNMOUNT_RETRIES_NUMBER = 3
 
 
-def compose_exponantional_timeouts(retries=1):
+def compose_exponantional_timeouts(retries: int = 1) -> list:
     return [2 ** power for power in range(retries)]
 
 
@@ -53,7 +53,7 @@ def run_cmd(cmd, retries=1):
     res = None
     timeouts = compose_exponantional_timeouts(retries)
     for retry, timeout in enumerate(timeouts):
-        logger.info(f'Command {" ".join(cmd)} try {retry}')
+        logger.info(f'Command {" ".join(cmd)} attempt {retry}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
             logger.info(f'Command {" ".join(cmd)} success')
@@ -61,9 +61,11 @@ def run_cmd(cmd, retries=1):
         else:
             stderr = res.stderr.decode('utf-8')
             cmd_line = ' '.join(cmd)
-            logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
+            logger.error(
+                f'Command {cmd_line} attempt {retry} failed with {stderr}'
+            )
             time.sleep(timeout)
-    raise LvmPyError(f'Command {cmd_line} failed after {retries} retries')
+        raise LvmPyError(f'Command {cmd_line} failed, error: {stderr}')
 
 
 def volume_mountpoint(volume):
@@ -101,6 +103,16 @@ def ensure_physical_volume(physical_volume=PHYSICAL_VOLUME):
         run_cmd(['pvcreate', physical_volume, '-y'])
 
 
+def remove_physical_volume(physical_volume=PHYSICAL_VOLUME):
+    if physical_volume in physical_volumes():
+        run_cmd(['pvremove', physical_volume, '-y'])
+
+
+def remove_volume_group(volume_group=VOLUME_GROUP):
+    if volume_group in volume_groups():
+        run_cmd(['vgremove', volume_group, '-y'])
+
+
 def volume_groups():
     res = subprocess.run(['vgs', '-o', 'name'])
     if res.returncode != 0:
@@ -128,7 +140,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         run_cmd(['vgcreate', name, physical_volume])
 
 
-def create(name, size):
+def create(name: str, size: int) -> None:
     logger.info(f'Creating volume with size {size}')
     with volume_lock:
         run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
@@ -141,7 +153,7 @@ def create(name, size):
         raise LvmPyError(f'Command {cmd_line} failed')
 
 
-def remove(name):
+def remove(name: str) -> None:
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
         unmount(name)
@@ -153,7 +165,7 @@ def remove(name):
         os.rmdir(mountpoint)
 
 
-def mount(name):
+def mount(name: str) -> str:
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
@@ -165,6 +177,16 @@ def mount(name):
     with volume_lock:
         run_cmd(['mount', volume_device(name), mountpoint])
     return mountpoint
+
+
+def physical_volume_from_group(group: str) -> str:
+    vgs = volume_groups()
+    if group not in vgs:
+        return None
+
+    return run_cmd(
+        ['sudo', 'vgs', '-o', 'pv_name', group, '--noheadings']
+    ).strip()
 
 
 def path_user(path):
@@ -241,7 +263,7 @@ def path(name):
     return result
 
 
-def volumes():
+def volumes(group=VOLUME_GROUP):
     stdout = run_cmd(['lvs', '-o', 'name', '-S', f'vg_name={VOLUME_GROUP}'])
     lvs = list(filter(
         None,
