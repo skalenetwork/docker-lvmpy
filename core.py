@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
-UNMOUNT_RETRIES_NUMBER = 3
+UNMOUNT_RETRIES_NUMBER = 12
 
 
 def compose_exponantional_timeouts(retries: int = 1) -> list:
