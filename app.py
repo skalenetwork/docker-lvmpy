@@ -118,7 +118,7 @@ def create():
     if options is None:
         options = {}
     size_str = options.get('size') or DEFAULT_SIZE
-    logger.info(f'Options={options}, size_str={size_str}')
+    logger.info(f'Create volume options={options}, size_str={size_str}')
 
     try:
         create_volume(name, size_str)
