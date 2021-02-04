@@ -22,7 +22,7 @@ SECOND_VOLUME_NAME = 'vol_b'
 
 def test_create_remove(vg):
     create(FIRST_VOLUME_NAME, '250m')
-    create(SECOND_VOLUME_NAME, '300m')
+    create(SECOND_VOLUME_NAME, '300M')
 
     lvs = volumes()
     assert FIRST_VOLUME_NAME in lvs

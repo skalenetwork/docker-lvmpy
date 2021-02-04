@@ -140,10 +140,12 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         run_cmd(['vgcreate', name, physical_volume])
 
 
-def create(name: str, size: int) -> None:
-    logger.info(f'Creating volume with size {size}')
+def create(name: str, size_unit: str) -> None:
+    if size_unit.endswith('b'):
+        size_unit = size_unit[:-1]
+    logger.info(f'Creating volume with size {size_unit}b')
     with volume_lock:
-        run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
+        run_cmd(['lvcreate', '-L', f'{size_unit}b', '-n', name, VOLUME_GROUP])
     res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')

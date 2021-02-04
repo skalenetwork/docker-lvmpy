@@ -84,6 +84,7 @@ def handle_500(e):
 
 @app.before_first_request
 def enusre_lvm():
+    g.start_time = time.time()
     ensure_volume_group()
 
 
@@ -117,6 +118,7 @@ def create():
     if options is None:
         options = {}
     size_str = options.get('size') or DEFAULT_SIZE
+    logger.info(f'Options={options}, size_str={size_str}')
 
     try:
         create_volume(name, size_str)
