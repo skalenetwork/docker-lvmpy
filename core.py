@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
-UNMOUNT_RETRIES_NUMBER = 12
+UNMOUNT_RETRIES_NUMBER = 3
+DEFAULT_RETRY_NUMBER = 3
 
 
 def compose_exponantional_timeouts(retries: int = 1) -> list:
@@ -49,23 +50,24 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
 
 
-def run_cmd(cmd, retries=1):
-    res = None
+def run_cmd(cmd, retries=3):
+    res, err = None, None
     timeouts = compose_exponantional_timeouts(retries)
-    for retry, timeout in enumerate(timeouts):
-        logger.info(f'Command {" ".join(cmd)} attempt {retry}')
+    lines = ' '.join(cmd)
+    for attempt, timeout in enumerate(timeouts):
+        logger.info(f'Command {lines} attempt {attempt}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
-            logger.info(f'Command {" ".join(cmd)} success')
+            logger.info(f'Command {lines} success')
             return res.stdout.decode('utf-8')
         else:
-            stderr = res.stderr.decode('utf-8')
-            cmd_line = ' '.join(cmd)
+            err = res.stderr.decode('utf-8')
             logger.error(
-                f'Command {cmd_line} attempt {retry} failed with {stderr}'
+                f'Command {lines} attempt {attempt} '
+                f'failed with {err}. Sleeping for {timeout}s'
             )
             time.sleep(timeout)
-        raise LvmPyError(f'Command {cmd_line} failed, error: {stderr}')
+    raise LvmPyError(f'Command {lines} failed, error: {err}')
 
 
 def volume_mountpoint(volume):
@@ -157,6 +159,7 @@ def create(name: str, size_unit: str) -> None:
 
 def remove(name: str) -> None:
     mountpoint = volume_mountpoint(name)
+    logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
         unmount(name)
     with volume_lock:
@@ -201,12 +204,25 @@ def path_user(path):
 
 
 def file_in_path_user(path):
+    logger.info(f'Checking who is using files in {path} ...')
     files = os.listdir(path)
     if len(files) == 0:
         return []
-    filepath = os.path.join(os.getcwd(), files[0])
+    filepath = os.path.join(path, files[0])
     logger.info(f'Checking filepath {filepath} ...')
     return path_user(filepath)
+
+
+def log_lsof_for_volume_device(volume):
+    device = volume_device(volume)
+    logger.info(f'Checking lsof for {device}')
+    cmd = ['lsof', '+f', '--', device]
+    try:
+        res = run_cmd(cmd)
+    except LvmPyError as err:
+        logger.error(f'Lsof errored with {err}')
+    else:
+        logger.info(f'Lsof output: \n{res}')
 
 
 def device_users(name):
@@ -236,6 +252,8 @@ def log_consumers(consumers):
 
 
 def unmount(name):
+    log_lsof_for_volume_device(name)
+
     device_consumers = device_users(name)
     logger.info(f'Device is used by {len(device_consumers)}: '
                 f'{device_consumers}')
@@ -251,9 +269,10 @@ def unmount(name):
                 f'{file_consumers}')
     log_consumers(file_consumers)
 
+    device = volume_device(name)
+    cmd = ['umount', device]
     with volume_lock:
-        run_cmd(['umount', volume_device(name)],
-                retries=UNMOUNT_RETRIES_NUMBER)
+        run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
 
 
 def path(name):
