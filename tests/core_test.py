@@ -12,6 +12,7 @@ from core import (
     device_users,
     file_users,
     mountpoint_users,
+    physical_volume_from_group,
     volume_mountpoint
 )
 
@@ -21,7 +22,7 @@ SECOND_VOLUME_NAME = 'vol_b'
 
 def test_create_remove(vg):
     create(FIRST_VOLUME_NAME, '250m')
-    create(SECOND_VOLUME_NAME, '300m')
+    create(SECOND_VOLUME_NAME, '300M')
 
     lvs = volumes()
     assert FIRST_VOLUME_NAME in lvs
@@ -133,3 +134,10 @@ def test_file_users(vg):
 
     assert isinstance(file_consumers_running, list)
     assert file_consumers_finished == []
+
+
+def test_physical_volume_from_group(pv, vg) -> str:
+    block_device = physical_volume_from_group(vg)
+    assert block_device == pv
+    block_device = physical_volume_from_group('not-existing-vg')
+    assert block_device is None

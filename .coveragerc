@@ -1,0 +1,6 @@
+[run]
+omit = 
+    tests/*
+    main.py
+    server_test.py
+    tmp.py
