@@ -62,9 +62,10 @@ def run_cmd(cmd, retries=3):
             return res.stdout.decode('utf-8')
         else:
             err = res.stderr.decode('utf-8')
+            out = res.stdout.decode('utf-8')
             logger.error(
                 f'Command {lines} attempt {attempt} '
-                f'failed with {err}. Sleeping for {timeout}s'
+                f'failed with {err}, out: {out}. Sleeping for {timeout}s'
             )
             time.sleep(timeout)
     raise LvmPyError(f'Command {lines} failed, error: {err}')
@@ -217,12 +218,10 @@ def log_lsof_for_volume_device(volume):
     device = volume_device(volume)
     logger.info(f'Checking lsof for {device}')
     cmd = ['lsof', '+f', '--', device]
-    try:
-        res = run_cmd(cmd)
-    except LvmPyError as err:
-        logger.error(f'Lsof errored with {err}')
-    else:
-        logger.info(f'Lsof output: \n{res}')
+    res = subprocess.run(cmd)
+    out = res.stdout.decode('utf-8')
+    err = res.stderr.decode('utf-8')
+    logger.info(f'Lsof returned err: {err}; out: {out}')
 
 
 def device_users(name):
