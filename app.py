@@ -34,10 +34,14 @@ from core import (
     unmount as unmount_volume,
     path as volume_path,
     get as get_volume,
+    get_block_device_size,
     volumes as list_volumes,
     LvmPyError
 )
-from config import LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES, LOG_FORMAT, LOG_PATH
+from config import (
+    LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
+    LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
+)
 
 
 logging.basicConfig(
@@ -103,6 +107,14 @@ def log_elapsed(response):
 @app.route('/')
 def index():
     return ok()
+
+
+@app.route('/physical-volume-size')
+def physical_volume_size():
+    return ok({
+        'name': PHYSICAL_VOLUME,
+        'size': get_block_device_size(PHYSICAL_VOLUME)
+    })
 
 
 @app.route('/Plugin.Activate', methods=['POST'])
