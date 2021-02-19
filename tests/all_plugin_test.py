@@ -1,9 +1,12 @@
+import os
+import requests
 import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor
 import docker
 
 
+PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
 VOLUME = 'pytest_docker_lvm'
 DRIVER = 'lvmpy'
@@ -177,3 +180,11 @@ def test_docker_system_restart():
         time.sleep(15)
         remove_containers(containers)
         remove_volumes(volumes)
+
+
+def test_get_block_device_size():
+    response = requests.get('http://127.0.0.1:7373/physical-volume-size')
+    data = response.json()
+    assert data['Err'] == ''
+    assert data['name'] == PHYSICAL_VOLUME
+    assert data['size'] > 0
