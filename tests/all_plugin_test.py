@@ -185,6 +185,15 @@ def test_docker_system_restart():
 def test_get_block_device_size():
     response = requests.get(
         'http://127.0.0.1:7373/physical-volume-size',
+        json={'Name': None}
+    )
+    data = response.json()
+    assert data['Err'] == ''
+    assert data['Name'] == PHYSICAL_VOLUME
+    assert data['Size'] > 0
+
+    response = requests.get(
+        'http://127.0.0.1:7373/physical-volume-size',
         json={'Name': PHYSICAL_VOLUME}
     )
     data = response.json()
