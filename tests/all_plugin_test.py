@@ -189,8 +189,8 @@ def test_get_block_device_size():
     )
     data = response.json()
     assert data['Err'] == ''
-    assert data['name'] == PHYSICAL_VOLUME
-    assert data['size'] > 0
+    assert data['Name'] == PHYSICAL_VOLUME
+    assert data['Size'] > 0
 
     response = requests.get(
         'http://127.0.0.1:7373/physical-volume-size',

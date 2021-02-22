@@ -113,8 +113,8 @@ def physical_volume_size():
     data = request.get_json(force=True)
     name = data.get('Name', PHYSICAL_VOLUME)
     return ok({
-        'name': name,
-        'size': get_block_device_size(name)
+        'Name': name,
+        'Size': get_block_device_size(name)
     })
 
 
