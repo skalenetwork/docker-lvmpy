@@ -111,7 +111,7 @@ def index():
 @app.route('/physical-volume-size')
 def physical_volume_size():
     data = request.get_json(force=True)
-    name = data.get('Name', PHYSICAL_VOLUME)
+    name = data.get('Name') or PHYSICAL_VOLUME
     return ok({
         'Name': name,
         'Size': get_block_device_size(name)
