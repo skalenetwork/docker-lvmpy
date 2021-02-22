@@ -1,9 +1,12 @@
+import os
+import requests
 import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor
 import docker
 
 
+PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
 VOLUME = 'pytest_docker_lvm'
 DRIVER = 'lvmpy'
@@ -177,3 +180,21 @@ def test_docker_system_restart():
         time.sleep(15)
         remove_containers(containers)
         remove_volumes(volumes)
+
+
+def test_get_block_device_size():
+    response = requests.get(
+        'http://127.0.0.1:7373/physical-volume-size',
+        json={'Name': PHYSICAL_VOLUME}
+    )
+    data = response.json()
+    assert data['Err'] == ''
+    assert data['Name'] == PHYSICAL_VOLUME
+    assert data['Size'] > 0
+
+    response = requests.get(
+        'http://127.0.0.1:7373/physical-volume-size',
+        json={'Name': '/dev/None'}
+    )
+    data = response.json()
+    assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
