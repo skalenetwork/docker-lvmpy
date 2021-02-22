@@ -301,10 +301,6 @@ def get(name):
 
 def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     """ Returns size of specified block device in bytes """
-    result = run_cmd(['blockdev', '--getsize64', device])
-    try:
-        size = int(result.strip())
-    except ValueError:
-        logger.error(f'Size check returned broken string {repr(result)}')
-        return -1
+    result = run_cmd(['blockdev', '--getsize64', device], retries=1)
+    size = int(result.strip())
     return size

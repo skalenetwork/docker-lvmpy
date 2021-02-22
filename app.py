@@ -82,8 +82,8 @@ def error(err, code: int = 400):
 
 @app.errorhandler(InternalServerError)
 def handle_500(e):
-    original = getattr(e, "original_exception", None)
-    return error(err=original, code=500)
+    logger.error(f'Request failed with 500 code, err={e}')
+    return error(err=e.args[0], code=500)
 
 
 @app.before_first_request
@@ -111,9 +111,11 @@ def index():
 
 @app.route('/physical-volume-size')
 def physical_volume_size():
+    data = request.get_json(force=True)
+    name = data.get('Name', PHYSICAL_VOLUME)
     return ok({
-        'name': PHYSICAL_VOLUME,
-        'size': get_block_device_size(PHYSICAL_VOLUME)
+        'name': name,
+        'size': get_block_device_size(name)
     })
 
 

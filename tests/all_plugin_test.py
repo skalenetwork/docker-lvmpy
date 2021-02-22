@@ -183,8 +183,18 @@ def test_docker_system_restart():
 
 
 def test_get_block_device_size():
-    response = requests.get('http://127.0.0.1:7373/physical-volume-size')
+    response = requests.get(
+        'http://127.0.0.1:7373/physical-volume-size',
+        json={'Name': PHYSICAL_VOLUME}
+    )
     data = response.json()
     assert data['Err'] == ''
     assert data['name'] == PHYSICAL_VOLUME
     assert data['size'] > 0
+
+    response = requests.get(
+        'http://127.0.0.1:7373/physical-volume-size',
+        json={'Name': '/dev/None'}
+    )
+    data = response.json()
+    assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
