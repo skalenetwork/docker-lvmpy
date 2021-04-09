@@ -19,10 +19,12 @@
 
 import json
 import logging
+import time
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, request, Response
+from flask import Flask, Response, g, request
+from werkzeug.exceptions import InternalServerError
 
 from core import (
     ensure_volume_group,
@@ -32,10 +34,13 @@ from core import (
     unmount as unmount_volume,
     path as volume_path,
     get as get_volume,
-    volumes as list_volumes,
-    LvmPyError
+    get_block_device_size,
+    volumes as list_volumes
 )
-from config import LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES, LOG_FORMAT, LOG_PATH
+from config import (
+    LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
+    LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
+)
 
 
 logging.basicConfig(
@@ -59,27 +64,58 @@ PORT = 7373
 DEFAULT_SIZE = '256m'
 
 
-def response(data, code):
+def response(data: dict, code: int) -> Response:
     return Response(response=json.dumps(data),
                     status=code, mimetype='application/json')
 
 
-def ok(out_data={}):
+def ok(out_data: dict = None):
+    if out_data is None:
+        out_data = {}
     return response({**out_data, 'Err': ''}, 200)
 
 
-def error(err, code=400):
+def error(err, code: int = 400):
     return response({'Err': err}, code)
+
+
+@app.errorhandler(InternalServerError)
+def handle_500(e):
+    logger.error(f'Request failed with 500 code, err={e}')
+    return error(err=e.args[0], code=500)
 
 
 @app.before_first_request
 def enusre_lvm():
+    g.start_time = time.time()
     ensure_volume_group()
+
+
+@app.before_request
+def save_time():
+    g.start_time = time.time()
+
+
+@app.teardown_request
+def log_elapsed(response):
+    elapsed = round(time.time() - g.start_time, 2)
+    logger.info(f'Request elapsed time: {elapsed}s')
+    return response
 
 
 @app.route('/')
 def index():
     return ok()
+
+
+@app.route('/physical-volume-size')
+def physical_volume_size():
+    data = request.get_json(force=True)
+    name = data.get('Name') or PHYSICAL_VOLUME
+    return ok({
+        'Name': name,
+        'Size': get_block_device_size(name)
+    })
 
 
 @app.route('/Plugin.Activate', methods=['POST'])
@@ -95,11 +131,9 @@ def create():
     if options is None:
         options = {}
     size_str = options.get('size') or DEFAULT_SIZE
+    logger.info(f'Create volume options={options}, size_str={size_str}')
 
-    try:
-        create_volume(name, size_str)
-    except LvmPyError:
-        return error('Create operation failed. Recheck input data')
+    create_volume(name, size_str)
     return ok()
 
 
@@ -107,10 +141,7 @@ def create():
 def remove():
     data = request.get_json(force=True)
     name = data['Name']
-    try:
-        remove_volume(name)
-    except LvmPyError:
-        return error('Remove operation failed. Recheck input data')
+    remove_volume(name)
     return ok()
 
 
@@ -118,10 +149,7 @@ def remove():
 def mount():
     data = request.get_json(force=True)
     name = data['Name']
-    try:
-        mountpoint = mount_volume(name)
-    except LvmPyError:
-        return error('Mount operation failed. Recheck input data')
+    mountpoint = mount_volume(name)
     return ok(out_data={'Mountpoint': mountpoint})
 
 
@@ -129,11 +157,7 @@ def mount():
 def unmount():
     data = request.get_json(force=True)
     name = data['Name']
-    try:
-        unmount_volume(name)
-    except LvmPyError:
-        return error('Unmount operation failed. Recheck input data')
-
+    unmount_volume(name)
     return ok()
 
 
@@ -141,10 +165,7 @@ def unmount():
 def path():
     data = request.get_json(force=True)
     name = data['Name']
-    try:
-        mountpoint = volume_path(name)
-    except LvmPyError:
-        return error('Path operation failed. Recheck input data')
+    mountpoint = volume_path(name)
 
     return ok(out_data={'Mountpoint': mountpoint})
 
@@ -153,12 +174,9 @@ def path():
 def get():
     data = request.get_json(force=True)
     name = data['Name']
-    try:
-        name = get_volume(name)
-        if name is None:
-            return error('No such volume')
-    except LvmPyError:
-        return error('Get operation failed. Recheck input data')
+    name = get_volume(name)
+    if name is None:
+        return error('No such volume')
 
     return ok({
         "Volume": {
@@ -171,11 +189,7 @@ def get():
 
 @app.route('/VolumeDriver.List', methods=['POST'])
 def volumes_list():
-    try:
-        volumes = list_volumes()
-    except LvmPyError:
-        return error('List operation failed. Recheck input data')
-
+    volumes = list_volumes()
     volumes_data = [{'Name': volume, 'Status': {}} for volume in volumes]
     data = {'Volumes': volumes_data, 'Err': ''}
     return ok(out_data=data)

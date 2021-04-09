@@ -33,9 +33,10 @@ logger = logging.getLogger(__name__)
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
 UNMOUNT_RETRIES_NUMBER = 3
+DEFAULT_RETRY_NUMBER = 3
 
 
-def compose_exponantional_timeouts(retries=1):
+def compose_exponantional_timeouts(retries: int = 1) -> list:
     return [2 ** power for power in range(retries)]
 
 
@@ -49,21 +50,25 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE)
 
 
-def run_cmd(cmd, retries=1):
-    res = None
+def run_cmd(cmd, retries=3):
+    res, err = None, None
     timeouts = compose_exponantional_timeouts(retries)
-    for retry, timeout in enumerate(timeouts):
-        logger.info(f'Command {" ".join(cmd)} try {retry}')
+    lines = ' '.join(cmd)
+    for attempt, timeout in enumerate(timeouts):
+        logger.info(f'Command {lines} attempt {attempt}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
-            logger.info(f'Command {" ".join(cmd)} success')
+            logger.info(f'Command {lines} success')
             return res.stdout.decode('utf-8')
         else:
-            stderr = res.stderr.decode('utf-8')
-            cmd_line = ' '.join(cmd)
-            logger.error(f'Command {cmd_line} try {retry} failed with {stderr}')
+            err = res.stderr.decode('utf-8')
+            out = res.stdout.decode('utf-8')
+            logger.error(
+                f'Command {lines} attempt {attempt} '
+                f'failed with {err}, out: {out}. Sleeping for {timeout}s'
+            )
             time.sleep(timeout)
-    raise LvmPyError(f'Command {cmd_line} failed after {retries} retries')
+    raise LvmPyError(f'Command {lines} failed, error: {err}')
 
 
 def volume_mountpoint(volume):
@@ -101,6 +106,16 @@ def ensure_physical_volume(physical_volume=PHYSICAL_VOLUME):
         run_cmd(['pvcreate', physical_volume, '-y'])
 
 
+def remove_physical_volume(physical_volume=PHYSICAL_VOLUME):
+    if physical_volume in physical_volumes():
+        run_cmd(['pvremove', physical_volume, '-y'])
+
+
+def remove_volume_group(volume_group=VOLUME_GROUP):
+    if volume_group in volume_groups():
+        run_cmd(['vgremove', volume_group, '-y'])
+
+
 def volume_groups():
     res = subprocess.run(['vgs', '-o', 'name'])
     if res.returncode != 0:
@@ -128,10 +143,12 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
         run_cmd(['vgcreate', name, physical_volume])
 
 
-def create(name, size):
-    logger.info(f'Creating volume with size {size}')
+def create(name: str, size_unit: str) -> None:
+    if size_unit.endswith('b'):
+        size_unit = size_unit[:-1]
+    logger.info(f'Creating volume with size {size_unit}b')
     with volume_lock:
-        run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, VOLUME_GROUP])
+        run_cmd(['lvcreate', '-L', f'{size_unit}b', '-n', name, VOLUME_GROUP])
     res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
@@ -141,8 +158,9 @@ def create(name, size):
         raise LvmPyError(f'Command {cmd_line} failed')
 
 
-def remove(name):
+def remove(name: str) -> None:
     mountpoint = volume_mountpoint(name)
+    logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
         unmount(name)
     with volume_lock:
@@ -153,7 +171,7 @@ def remove(name):
         os.rmdir(mountpoint)
 
 
-def mount(name):
+def mount(name: str) -> str:
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
@@ -167,6 +185,16 @@ def mount(name):
     return mountpoint
 
 
+def physical_volume_from_group(group: str) -> str:
+    vgs = volume_groups()
+    if group not in vgs:
+        return None
+
+    return run_cmd(
+        ['sudo', 'vgs', '-o', 'pv_name', group, '--noheadings']
+    ).strip()
+
+
 def path_user(path):
     res = subprocess.run(['fuser', path])
     if res.returncode == 0:
@@ -177,12 +205,23 @@ def path_user(path):
 
 
 def file_in_path_user(path):
+    logger.info(f'Checking who is using files in {path} ...')
     files = os.listdir(path)
     if len(files) == 0:
         return []
-    filepath = os.path.join(os.getcwd(), files[0])
+    filepath = os.path.join(path, files[0])
     logger.info(f'Checking filepath {filepath} ...')
     return path_user(filepath)
+
+
+def log_lsof_for_volume_device(volume):
+    device = volume_device(volume)
+    logger.info(f'Checking lsof for {device}')
+    cmd = ['lsof', '+f', '--', device]
+    res = subprocess.run(cmd)
+    out = res.stdout.decode('utf-8')
+    err = res.stderr.decode('utf-8')
+    logger.info(f'Lsof returned err: {err}; out: {out}')
 
 
 def device_users(name):
@@ -212,6 +251,8 @@ def log_consumers(consumers):
 
 
 def unmount(name):
+    log_lsof_for_volume_device(name)
+
     device_consumers = device_users(name)
     logger.info(f'Device is used by {len(device_consumers)}: '
                 f'{device_consumers}')
@@ -227,9 +268,10 @@ def unmount(name):
                 f'{file_consumers}')
     log_consumers(file_consumers)
 
+    device = volume_device(name)
+    cmd = ['umount', device]
     with volume_lock:
-        run_cmd(['umount', volume_device(name)],
-                retries=UNMOUNT_RETRIES_NUMBER)
+        run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
 
 
 def path(name):
@@ -241,7 +283,7 @@ def path(name):
     return result
 
 
-def volumes():
+def volumes(group=VOLUME_GROUP):
     stdout = run_cmd(['lvs', '-o', 'name', '-S', f'vg_name={VOLUME_GROUP}'])
     lvs = list(filter(
         None,
@@ -255,3 +297,10 @@ def get(name):
     if name not in lvs:
         return None
     return name
+
+
+def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
+    """ Returns size of specified block device in bytes """
+    result = run_cmd(['blockdev', '--getsize64', device], retries=1)
+    size = int(result.strip())
+    return size
