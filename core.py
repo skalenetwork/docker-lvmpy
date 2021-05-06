@@ -171,7 +171,7 @@ def remove(name: str) -> None:
         os.rmdir(mountpoint)
 
 
-def mount(name: str) -> str:
+def mount(name: str, is_schain=True) -> str:
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
@@ -182,6 +182,11 @@ def mount(name: str) -> str:
 
     with volume_lock:
         run_cmd(['mount', volume_device(name), mountpoint])
+
+    if is_schain:
+        filestorage_path = os.path.join(mountpoint, 'filestorage')
+        filestorage_link_path = os.path.join(FILESTORAGE_DIR, name)
+        os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
     return mountpoint
 
 
