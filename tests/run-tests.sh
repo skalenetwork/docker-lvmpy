@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-export FILESTORAGE_DIR=./filestorage
+export FILESTORAGE_DIR=$(realpath ./filestorage)
 
 . tests/prepare.sh
 export PYTHONPATH=${PYTHONPATH}:.
