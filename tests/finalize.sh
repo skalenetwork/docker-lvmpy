@@ -22,3 +22,5 @@ if [ ! -z ${BLOCK_DEVICE} ]; then
     echo 'Removing loopbackfile.img'
     rm -f loopbackfile.img
 fi
+
+rm -f $FILESTORAGE_DIR
