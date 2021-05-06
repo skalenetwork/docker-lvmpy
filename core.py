@@ -255,7 +255,7 @@ def log_consumers(consumers):
         logger.info(f'PID {pid}: {info}')
 
 
-def unmount(name):
+def unmount(name, is_schain=True):
     log_lsof_for_volume_device(name)
 
     device_consumers = device_users(name)
@@ -277,6 +277,10 @@ def unmount(name):
     cmd = ['umount', device]
     with volume_lock:
         run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
+
+    if is_schain:
+        link_name = os.path.join(FILESTORAGE_DIR, name)
+        os.remove(link_name)
 
 
 def path(name):
