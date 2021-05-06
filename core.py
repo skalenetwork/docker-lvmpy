@@ -26,7 +26,7 @@ from threading import Lock
 
 import psutil
 
-from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
+from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_DIR
 
 logger = logging.getLogger(__name__)
 
