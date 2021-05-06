@@ -158,11 +158,11 @@ def create(name: str, size_unit: str) -> None:
         raise LvmPyError(f'Command {cmd_line} failed')
 
 
-def remove(name: str) -> None:
+def remove(name: str, is_schain=True) -> None:
     mountpoint = volume_mountpoint(name)
     logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
-        unmount(name)
+        unmount(name, is_schain)
     with volume_lock:
         run_cmd(['lvremove', '-f', volume_device(name)])
     logger.info(f'Checking if we need to remove {mountpoint}')
@@ -176,7 +176,7 @@ def mount(name: str, is_schain=True) -> str:
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
-        unmount(name)
+        unmount(name, is_schain)
     if not os.path.exists(mountpoint):
         run_cmd(['mkdir', mountpoint])
 
