@@ -79,7 +79,7 @@ def test_mount_unmount(vg):
         path(FIRST_VOLUME_NAME)
 
     remove(FIRST_VOLUME_NAME)
-    assert not os.path.islink(os.path.join(FILESTORAGE_MAPPING, FIRST_VOLUME_NAME))
+    assert not os.path.exists(os.path.join(FILESTORAGE_MAPPING, FIRST_VOLUME_NAME))
 
 
 def aquire_volume(volume_name):
