@@ -212,8 +212,10 @@ def test_get_block_device_size():
 def test_container_mapping():
     volumes = create_volumes(1)
     containers = create_containers(1)
-    assert os.path.islink(os.path.join(FILESTORAGE_MAPPING, containers[0].name))
+    link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
+
+    assert os.path.islink(link_path), link_path
 
     remove_containers(containers)
     remove_volumes(volumes)
-    assert not os.path.exists(os.path.join(FILESTORAGE_MAPPING, containers[0].name))
+    assert not os.path.exists(link_path), link_path
