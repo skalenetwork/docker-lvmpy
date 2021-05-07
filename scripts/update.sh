@@ -29,6 +29,7 @@ if [[ ! -d $LOG_PATH ]]; then
 fi
 
 
+modprobe btrfs
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true
 
