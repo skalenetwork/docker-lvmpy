@@ -213,6 +213,7 @@ def test_container_mapping():
     volumes = create_volumes(1)
     containers = create_containers(1)
     link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
+    time.sleep(10)
 
     assert os.path.islink(link_path), link_path
 
