@@ -26,7 +26,7 @@ from threading import Lock
 
 import psutil
 
-from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_DIR
+from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ def mount(name: str, is_schain=True) -> str:
 
     if is_schain:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
-        filestorage_link_path = os.path.join(FILESTORAGE_DIR, name)
+        filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
         os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
     return mountpoint
 
@@ -279,7 +279,7 @@ def unmount(name, is_schain=True):
         run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
 
     if is_schain:
-        link_name = os.path.join(FILESTORAGE_DIR, name)
+        link_name = os.path.join(FILESTORAGE_MAPPING, name)
         os.remove(link_name)
 
 

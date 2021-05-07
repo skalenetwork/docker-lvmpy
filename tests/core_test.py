@@ -5,7 +5,7 @@ from multiprocessing import Process
 import mock
 import pytest
 
-from config import FILESTORAGE_DIR
+from config import FILESTORAGE_MAPPING
 from core import (
     create, remove, volumes, LvmPyError,
     mount, path, unmount,
@@ -72,14 +72,14 @@ def test_mount_unmount(vg):
 
     mountpoint = path(FIRST_VOLUME_NAME)
     assert mountpoint == '/dev/mapper/schains-vol--a'
-    assert os.path.islink(os.path.join(FILESTORAGE_DIR, FIRST_VOLUME_NAME))
+    assert os.path.islink(os.path.join(FILESTORAGE_MAPPING, FIRST_VOLUME_NAME))
 
     unmount(FIRST_VOLUME_NAME)
     with pytest.raises(LvmPyError):
         path(FIRST_VOLUME_NAME)
 
     remove(FIRST_VOLUME_NAME)
-    assert not os.path.islink(os.path.join(FILESTORAGE_DIR, FIRST_VOLUME_NAME))
+    assert not os.path.islink(os.path.join(FILESTORAGE_MAPPING, FIRST_VOLUME_NAME))
 
 
 def aquire_volume(volume_name):

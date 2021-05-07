@@ -3,7 +3,7 @@ set -e
 
 : "${PHYSICAL_VOLUME?Need to set PHYSICAL_VOLUME}"
 : "${VOLUME_GROUP?Need to set VOLUME_GROUP}"
-: "${FILESTORAGE_DIR?Need to set FILESTORAGE_DIR}"
+: "${FILESTORAGE_MAPPING?Need to set FILESTORAGE_MAPPING}"
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BASE_DIR="$(dirname "$CURRENT_DIR")"
@@ -40,7 +40,7 @@ cp systemd/docker-lvmpy.service $SYSTEMD_CONFIG_PATH
 cp app.py core.py config.py cleanup.py healthcheck.py requirements.txt $CODE_PATH
 echo "PHYSICAL_VOLUME=$PHYSICAL_VOLUME" > $DRIVER_CONFIG/lvm-environment
 echo "VOLUME_GROUP=$VOLUME_GROUP" >> $DRIVER_CONFIG/lvm-environment
-echo "FILESTORAGE_DIR=$FILESTORAGE_DIR" >> $DRIVER_CONFIG/lvm-environment
+echo "FILESTORAGE_MAPPING=FILESTORAGE_MAPPING" >> $DRIVER_CONFIG/lvm-environment
 
 echo 'Installing requirements ...'
 cd $CODE_PATH

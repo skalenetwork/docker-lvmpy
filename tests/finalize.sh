@@ -23,4 +23,4 @@ if [ ! -z ${BLOCK_DEVICE} ]; then
     rm -f loopbackfile.img
 fi
 
-rm -rf $FILESTORAGE_DIR
+rm -rf $FILESTORAGE_MAPPING

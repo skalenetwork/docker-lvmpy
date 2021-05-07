@@ -10,4 +10,4 @@ if [ -z ${BLOCK_DEVICE} ]; then
     export BLOCK_DEVICE
 fi
 
-mkdir ${FILESTORAGE_DIR} || true
+mkdir ${FILESTORAGE_MAPPING} || true
