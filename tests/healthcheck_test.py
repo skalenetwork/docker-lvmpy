@@ -3,6 +3,7 @@ import mock
 import pytest
 
 from healthcheck import Healthcheck
+from core import run_cmd
 
 
 @pytest.fixture
@@ -74,3 +75,15 @@ def test_healthcheck_container_status_failed(vg, hc):
                            side_effect=ContainerStatusError('Test error')):
         with pytest.raises(ContainerStatusError):
             hc.run()
+
+
+@pytest.fixture
+def disable_btrfs():
+    run_cmd(['modprobe', '-r', 'btrfs'])
+    yield
+    run_cmd(['modprobe', 'btrfs'])
+
+
+def test_btrfs_not_loaded(vg, hc, disable_btrfs):
+    with pytest.raises(docker.errors.APIError):
+        hc.run()
