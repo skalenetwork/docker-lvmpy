@@ -149,7 +149,7 @@ def remove():
 def mount():
     data = request.get_json(force=True)
     name = data['Name']
-    is_schain = data.get('is_schain')
+    is_schain = data.get('is_schain', True)
     mountpoint = mount_volume(name, is_schain)
     return ok(out_data={'Mountpoint': mountpoint})
 

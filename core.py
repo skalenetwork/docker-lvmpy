@@ -187,6 +187,7 @@ def mount(name: str, is_schain=True) -> str:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
         filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
         os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
+        logger.info(f'Symlink was created in {filestorage_link_path}')
     return mountpoint
 
 
