@@ -87,6 +87,13 @@ class Healthcheck:
     def run(self):
         with self.lvmpy_volume():
             with self.lvmpy_container():
+
+                from sh import lsmod
+                _ = next(
+                    filter(lambda s: 'btrfs' in s, lsmod().split('\n')))
+                _ = next(
+                    filter
+                    (lambda s: s.startswith('btrfs'), lsmod().split('\n')))
                 self.check_volume_status()
                 self.check_container_status()
 
