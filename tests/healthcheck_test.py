@@ -86,9 +86,9 @@ def disable_btrfs():
 
 def test_btrfs_not_loaded(vg, hc, disable_btrfs):
     # TODO: IDRM
-    from sh import lsmod
+    # from sh import lsmod
     # _ = next(filter(lambda s: 'btrfs' in s, lsmod().split('\n')))
-    _ = next(filter(lambda s: s.startswith('btrfs'), lsmod().split('\n')))
+    # _ = next(filter(lambda s: s.startswith('btrfs'), lsmod().split('\n')))
     hc.run()
     with pytest.raises(docker.errors.APIError):
         hc.run()
