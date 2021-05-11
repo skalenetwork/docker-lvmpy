@@ -215,6 +215,8 @@ def test_container_mapping():
     link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
     time.sleep(10)
 
+    print(os.stat(link_path))
+    assert os.path.isfile(link_path), link_path
     assert os.path.islink(link_path), link_path
 
     remove_containers(containers)
