@@ -102,6 +102,7 @@ def create_containers(container_number=NUMBER_OF_CONTAINERS):
         client.containers.run(image=IMAGE,
                               name=f'test{i}',
                               detach=True,
+                              cmd='sleep 60',
                               cap_add=['SYS_ADMIN'],
                               volumes={f'test{i}': {
                                   'bind': '/data', 'mode': 'rw'}
@@ -213,9 +214,8 @@ def test_container_mapping():
     volumes = create_volumes(1)
     containers = create_containers(1)
     link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
-    time.sleep(10)
 
-    print(os.stat(link_path))
+    # print(os.stat(link_path))
     assert os.path.isfile(link_path), link_path
     assert os.path.islink(link_path), link_path
 
