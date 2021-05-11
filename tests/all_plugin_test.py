@@ -215,7 +215,6 @@ def test_container_mapping():
     containers = create_containers(1)
     link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
 
-    assert os.path.isfile(link_path), link_path
     assert pathlib.Path(link_path).is_symlink(), link_path
 
     remove_containers(containers)
