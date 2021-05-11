@@ -1,4 +1,5 @@
 import os
+import pathlib
 import requests
 import subprocess
 import time
@@ -215,9 +216,8 @@ def test_container_mapping():
     containers = create_containers(1)
     link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
 
-    # print(os.stat(link_path))
     assert os.path.isfile(link_path), link_path
-    assert os.path.islink(link_path), link_path
+    assert pathlib.Path(link_path).is_symlink(), link_path
 
     remove_containers(containers)
     remove_volumes(volumes)
