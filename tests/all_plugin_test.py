@@ -103,7 +103,6 @@ def create_containers(container_number=NUMBER_OF_CONTAINERS):
         client.containers.run(image=IMAGE,
                               name=f'test{i}',
                               detach=True,
-                              command='sleep 60',
                               cap_add=['SYS_ADMIN'],
                               volumes={f'test{i}': {
                                   'bind': '/data', 'mode': 'rw'}
