@@ -213,7 +213,7 @@ def test_get_block_device_size():
 def test_container_mapping():
     volumes = create_volumes(1)
     containers = create_containers(1)
-    link_path = os.path.join(FILESTORAGE_MAPPING, containers[0].name)
+    link_path = os.path.join(FILESTORAGE_MAPPING, volumes[0].name)
 
     assert pathlib.Path(link_path).is_symlink(), link_path
 
