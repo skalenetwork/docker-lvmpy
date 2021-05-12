@@ -46,5 +46,5 @@ systemctl restart docker-lvmpy
 echo 'Service is up'
 
 echo 'Checking driver health ...'
-# python healthcheck.py
+python healthcheck.py
 echo 'Lvmpy installation finished'
