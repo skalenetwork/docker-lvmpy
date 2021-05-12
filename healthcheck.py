@@ -14,6 +14,10 @@ def is_btrfs_loaded():
     return modules != []
 
 
+class ContainerNotRunningError:
+    pass
+
+
 class Healthcheck:
     def __init__(
         self, container: str,
@@ -76,7 +80,8 @@ class Healthcheck:
 
     def check_container_status(self):
         c = self.client.containers.get(self.container)
-        assert c.status == 'running', f'Actual status: {c.status}'
+        if c.status != 'running':
+            raise ContainerNotRunningError(f'{self.container} is not running')
 
     @contextmanager
     def lvmpy_volume(self):
