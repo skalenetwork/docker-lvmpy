@@ -2,7 +2,7 @@ import docker
 import mock
 import pytest
 
-from healthcheck import Healthcheck
+from healthcheck import is_btrfs_loaded, Healthcheck
 from core import run_cmd
 
 
@@ -85,9 +85,5 @@ def disable_btrfs():
 
 
 def test_btrfs_not_loaded(vg, hc, disable_btrfs):
-    # TODO: IDRM
-    # from sh import lsmod
-    # _ = next(filter(lambda s: 'btrfs' in s, lsmod().split('\n')))
-    # _ = next(filter(lambda s: s.startswith('btrfs'), lsmod().split('\n')))
-    with pytest.raises(docker.errors.APIError):
-        hc.run()
+    assert not is_btrfs_loaded()
+    hc.run()
