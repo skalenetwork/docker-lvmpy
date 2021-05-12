@@ -51,7 +51,7 @@ def main() -> None:
         except LvmPyError as err:
             print(f'Cleaning failed with error: {err}')
             exit(2)
-    print('Lvmpy cleanup actions for lvmpy executed successfully')
+    print('Lvmpy cleanup finished')
 
 
 if __name__ == '__main__':

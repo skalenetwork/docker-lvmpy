@@ -13,6 +13,7 @@ DRIVER_CONFIG=/etc/docker-lvmpy/
 LOG_PATH=/var/log/docker-lvmpy/
 
 apt update
+modprobe btrfs
 apt install auditd python3-dev python3-pip -y
 
 echo 'Ensuring required directories ...'
@@ -44,5 +45,6 @@ systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
 echo 'Service is up'
 
+echo 'Checking driver health ...'
 python healthcheck.py
-echo 'Done'
+echo 'Lvmpy installation finished'
