@@ -30,6 +30,7 @@ if [[ ! -d $LOG_PATH ]]; then
 fi
 
 
+modprobe btrfs
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true
 
@@ -56,5 +57,6 @@ systemctl restart docker-lvmpy
 
 echo 'Service is up'
 
+echo 'Checking driver health ...'
 python healthcheck.py
-echo 'Done'
+echo 'Lvmpy update finished'
