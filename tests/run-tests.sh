@@ -11,7 +11,7 @@ VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE scripts/install.sh
 # VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=tests/reinstall_test.py tests/
 
 echo 'Running install tests'
-VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --ignore=tests/reinstall_test.py tests/healthcheck_test.py -k test_btrfs_is_not_loaded
+VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --ignore=tests/reinstall_test.py tests/healthcheck_test.py -k test_btrfs_not_loaded
 
 # echo 'Updating docker-lvmpy'
 # VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE scripts/update.sh
