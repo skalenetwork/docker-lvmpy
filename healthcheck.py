@@ -28,9 +28,6 @@ class Healthcheck:
         self.volume = volume
         self.volume_size = volume_size
         self.client = docker.from_env()
-        self.exc_type = None
-        self.exc_value = None
-        self.tb = None
 
     def create_volume_using_driver(self) -> docker.models.volumes.Volume:
         print('Creating lvmpy volume ...')
