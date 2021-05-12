@@ -14,7 +14,7 @@ def is_btrfs_loaded():
     return modules != []
 
 
-class ContainerNotRunningError:
+class ContainerNotRunningError(Exception):
     pass
 
 
