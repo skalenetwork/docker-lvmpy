@@ -94,6 +94,7 @@ class Healthcheck:
 
     def run(self):
         with self.lvmpy_volume():
+            assert not is_btrfs_loaded()
             with self.lvmpy_container():
                 self.check_volume_status()
                 self.check_container_status()
