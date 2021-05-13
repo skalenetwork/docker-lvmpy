@@ -1,10 +1,11 @@
 import os
+import pathlib
 import requests
 import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor
 import docker
-
+from config import FILESTORAGE_MAPPING
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -84,10 +85,10 @@ def test_container_exec_using_volume(capfd):
     assert res.returncode == 0
 
 
-def create_volumes():
+def create_volumes(volumes_number=NUMBER_OF_CONTAINERS):
     volumes = [
         client.volumes.create(name=f'test{i}', driver='lvmpy', driver_opts={})
-        for i in range(NUMBER_OF_CONTAINERS)
+        for i in range(volumes_number)
     ]
     return volumes
 
@@ -97,7 +98,7 @@ def remove_volumes(volumes):
         volume.remove(force=True)
 
 
-def create_containers():
+def create_containers(container_number=NUMBER_OF_CONTAINERS):
     containers = [
         client.containers.run(image=IMAGE,
                               name=f'test{i}',
@@ -106,7 +107,7 @@ def create_containers():
                               volumes={f'test{i}': {
                                   'bind': '/data', 'mode': 'rw'}
                               })
-        for i in range(NUMBER_OF_CONTAINERS)
+        for i in range(container_number)
     ]
     for c in containers:
         print(c)
@@ -207,3 +208,15 @@ def test_get_block_device_size():
     )
     data = response.json()
     assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
+
+
+def test_container_mapping():
+    volumes = create_volumes(1)
+    containers = create_containers(1)
+    link_path = os.path.join(FILESTORAGE_MAPPING, volumes[0].name)
+
+    assert pathlib.Path(link_path).is_symlink(), link_path
+
+    remove_containers(containers)
+    remove_volumes(volumes)
+    assert not os.path.exists(link_path), link_path

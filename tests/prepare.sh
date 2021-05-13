@@ -9,3 +9,5 @@ if [ -z ${BLOCK_DEVICE} ]; then
     BLOCK_DEVICE="$(losetup --list -a | grep loopbackfile.img |  awk '{print $1}')"
     export BLOCK_DEVICE
 fi
+
+mkdir ${FILESTORAGE_MAPPING} || true

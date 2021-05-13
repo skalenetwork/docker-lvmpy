@@ -26,7 +26,7 @@ from threading import Lock
 
 import psutil
 
-from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP
+from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -158,11 +158,11 @@ def create(name: str, size_unit: str) -> None:
         raise LvmPyError(f'Command {cmd_line} failed')
 
 
-def remove(name: str) -> None:
+def remove(name: str, is_schain=True) -> None:
     mountpoint = volume_mountpoint(name)
     logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
-        unmount(name)
+        unmount(name, is_schain)
     with volume_lock:
         run_cmd(['lvremove', '-f', volume_device(name)])
     logger.info(f'Checking if we need to remove {mountpoint}')
@@ -171,17 +171,23 @@ def remove(name: str) -> None:
         os.rmdir(mountpoint)
 
 
-def mount(name: str) -> str:
+def mount(name: str, is_schain=True) -> str:
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
-        unmount(name)
+        unmount(name, is_schain)
     if not os.path.exists(mountpoint):
         run_cmd(['mkdir', mountpoint])
 
     with volume_lock:
         run_cmd(['mount', volume_device(name), mountpoint])
+
+    if is_schain:
+        filestorage_path = os.path.join(mountpoint, 'filestorage')
+        filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
+        os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
+        logger.info(f'Symlink was created in {filestorage_link_path}')
     return mountpoint
 
 
@@ -250,7 +256,7 @@ def log_consumers(consumers):
         logger.info(f'PID {pid}: {info}')
 
 
-def unmount(name):
+def unmount(name, is_schain=True):
     log_lsof_for_volume_device(name)
 
     device_consumers = device_users(name)
@@ -272,6 +278,10 @@ def unmount(name):
     cmd = ['umount', device]
     with volume_lock:
         run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
+
+    if is_schain:
+        link_name = os.path.join(FILESTORAGE_MAPPING, name)
+        os.remove(link_name)
 
 
 def path(name):
