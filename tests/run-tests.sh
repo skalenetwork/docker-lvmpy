@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-pwd
-
 export FILESTORAGE_MAPPING=$(realpath ./filestorage)
-
-echo 'FM TEST' $FILESTORAGE_MAPPING
 
 . tests/prepare.sh
 export PYTHONPATH=${PYTHONPATH}:.
