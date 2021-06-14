@@ -201,8 +201,10 @@ def mount(name: str, is_schain=True) -> str:
         logger.info('%s mountpoint is already in use', mountpoint)
         unmount(name, is_schain)
     if not os.path.exists(mountpoint):
-        run_cmd(['mkdir', mountpoint])
-    run_cmd(['mount', volume_device(name), mountpoint])
+        os.makedirs(mountpoint)
+
+    with volume_lock:
+        run_cmd(['mount', volume_device(name), mountpoint])
 
     if is_schain and not is_shared:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
