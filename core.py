@@ -182,21 +182,27 @@ def remove(name: str, is_schain=True) -> None:
 
 def mount(name: str, is_schain=True) -> str:
     is_shared = name in SHARED_VOLUMES
-    logger.info(f'Mounting volume {name}')
+    logger.info('Mounting volume %s', name)
     mountpoint = volume_mountpoint(name)
-    if os.path.ismount(mountpoint):
-        if is_shared:
-            logger.info(
-                f'Shared Volume {name} is already mounted onto {mountpoint}'
-            )
+    if is_shared:
+        with volume_lock:
+            if not os.path.ismount(mountpoint):
+                logger.info(
+                    'Shared volume %s is already mounted onto %s',
+                    name, mountpoint
+                )
+            else:
+                if not os.path.exists(mountpoint):
+                    run_cmd(['mkdir', mountpoint])
+
+                run_cmd(['mount', volume_device(name), mountpoint])
             return mountpoint
-        logger.warning(f'Volume {name} is already mounted onto {mountpoint}')
+    if os.path.ismount(mountpoint):
+        logger.info('%s mountpoint is already in use', mountpoint)
         unmount(name, is_schain)
     if not os.path.exists(mountpoint):
         run_cmd(['mkdir', mountpoint])
-
-    with volume_lock:
-        run_cmd(['mount', volume_device(name), mountpoint])
+    run_cmd(['mount', volume_device(name), mountpoint])
 
     if is_schain and not is_shared:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
