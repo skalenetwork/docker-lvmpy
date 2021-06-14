@@ -22,7 +22,8 @@ import os
 import subprocess
 import time
 from functools import partial
-from threading import Lock
+# from threading import Lock
+from multiprocessing import Lock
 
 import psutil
 
