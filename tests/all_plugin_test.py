@@ -4,7 +4,10 @@ import requests
 import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor
+
 import docker
+import pytest
+
 from config import FILESTORAGE_MAPPING
 from core import run_cmd, volumes, volume_device, volume_mountpoint
 
@@ -225,6 +228,7 @@ def test_container_mapping():
     assert not os.path.exists(link_path), link_path
 
 
+@pytest.fixture
 def shared_volume():
     v = client.volumes.create(
         name=SHARED_VOLUME,
@@ -237,7 +241,7 @@ def shared_volume():
         mountpoint = volume_mountpoint(SHARED_VOLUME)
         if os.path.ismount(mountpoint):
             run_cmd(['umount', device])
-        run_cmd(['lvremove', device])
+        run_cmd(['lvremove', '-f', device])
 
 
 def test_shared_volume(shared_volume):
