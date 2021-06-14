@@ -189,7 +189,7 @@ def mount(name: str, is_schain=True) -> str:
             logger.info(
                 f'Shared Volume {name} is already mounted on {mountpoint}'
             )
-            return
+            return mountpoint
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name, is_schain)
     if not os.path.exists(mountpoint):
