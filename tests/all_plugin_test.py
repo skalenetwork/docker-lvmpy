@@ -245,6 +245,7 @@ def shared_volume():
 
 
 def test_shared_volume(shared_volume):
+    c1, c2 = None, None
     try:
         c1 = client.containers.run(
             image=IMAGE,
@@ -262,5 +263,7 @@ def test_shared_volume(shared_volume):
         )
         time.sleep(3)
     finally:
-        c1.remove(force=True)
-        c2.remove(force=True)
+        if c1:
+            c1.remove(force=True)
+        if c2:
+            c2.remove(force=True)
