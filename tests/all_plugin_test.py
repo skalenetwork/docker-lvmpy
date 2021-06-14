@@ -6,6 +6,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 import docker
 from config import FILESTORAGE_MAPPING
+from core import run_cmd, volumes, volume_device, volume_mountpoint
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -17,6 +18,8 @@ CONTAINER = 'pytest_lvmpy'
 
 NUMBER_OF_CONTAINERS = 6
 ITERATIONS = 2
+
+SHARED_VOLUME = 'shared-space'
 
 
 client = docker.client.from_env()
@@ -220,3 +223,40 @@ def test_container_mapping():
     remove_containers(containers)
     remove_volumes(volumes)
     assert not os.path.exists(link_path), link_path
+
+
+def shared_volume():
+    v = client.volumes.create(
+        name=SHARED_VOLUME,
+        driver='lvmpy',
+        driver_opts={}
+    )
+    yield v
+    if SHARED_VOLUME in volumes():
+        device = volume_device(SHARED_VOLUME)
+        mountpoint = volume_mountpoint(SHARED_VOLUME)
+        if os.path.ismount(mountpoint):
+            run_cmd(['umount', device])
+        run_cmd(['lvremove', device])
+
+
+def test_shared_volume(shared_volume):
+    try:
+        c1 = client.containers.run(
+            image=IMAGE,
+            name='test-shared-0',
+            detach=True,
+            cap_add=['SYS_ADMIN'],
+            volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+        )
+        c2 = client.containers.run(
+            image=IMAGE,
+            name='test-shared-1',
+            detach=True,
+            cap_add=['SYS_ADMIN'],
+            volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+        )
+        time.sleep(3)
+    finally:
+        c1.remove(force=True)
+        c2.remove(force=True)

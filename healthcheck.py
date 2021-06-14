@@ -94,11 +94,15 @@ class Healthcheck:
         finally:
             self.remove_simple_container()
 
+    def create_btrfs_snapshot(self):
+        pass
+
     def run(self):
         with self.lvmpy_volume():
             with self.lvmpy_container():
                 self.check_volume_status()
                 self.check_container_status()
+                self.create_btrfs_snapshot()
 
 
 def main():

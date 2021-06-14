@@ -26,7 +26,13 @@ from threading import Lock
 
 import psutil
 
-from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_MAPPING
+from config import (
+    MOUNTPOINT_BASE,
+    PHYSICAL_VOLUME,
+    VOLUME_GROUP,
+    FILESTORAGE_MAPPING,
+    SHARED_VOLUMES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +165,9 @@ def create(name: str, size_unit: str) -> None:
 
 
 def remove(name: str, is_schain=True) -> None:
+    if name in SHARED_VOLUMES:
+        logger.warning('Attempt to remove shared %s volume', name)
+        return
     mountpoint = volume_mountpoint(name)
     logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
@@ -172,9 +181,15 @@ def remove(name: str, is_schain=True) -> None:
 
 
 def mount(name: str, is_schain=True) -> str:
+    is_shared = name in SHARED_VOLUMES
     logger.info(f'Mounting volume {name}')
     mountpoint = volume_mountpoint(name)
     if os.path.ismount(mountpoint):
+        if is_shared:
+            logger.info(
+                f'Shared Volume {name} is already mounted on {mountpoint}'
+            )
+            return
         logger.warning(f'Volume {name} is already mounted on {mountpoint}')
         unmount(name, is_schain)
     if not os.path.exists(mountpoint):
@@ -183,10 +198,14 @@ def mount(name: str, is_schain=True) -> str:
     with volume_lock:
         run_cmd(['mount', volume_device(name), mountpoint])
 
-    if is_schain:
+    if is_schain and not is_shared:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
         filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
-        os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
+        os.symlink(
+            filestorage_path,
+            filestorage_link_path,
+            target_is_directory=True
+        )
         logger.info(f'Symlink was created in {filestorage_link_path}')
     return mountpoint
 
@@ -273,6 +292,10 @@ def unmount(name, is_schain=True):
     logger.info(f'File is used by {len(file_consumers)}: '
                 f'{file_consumers}')
     log_consumers(file_consumers)
+
+    if name in SHARED_VOLUMES:
+        logger.warning('Attempt to umount shared %s volume', name)
+        return
 
     device = volume_device(name)
     cmd = ['umount', device]

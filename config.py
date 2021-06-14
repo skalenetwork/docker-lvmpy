@@ -23,6 +23,7 @@ import os
 MOUNTPOINT_BASE = '/mnt/'
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = os.getenv('VOLUME_GROUP')
+SHARED_VOLUMES = ('shared-space',)
 
 FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING')
 
