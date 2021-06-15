@@ -183,21 +183,23 @@ def remove(name: str, is_schain=True) -> None:
 
 def mount(name: str, is_schain=True) -> str:
     is_shared = name in SHARED_VOLUMES
-    logger.info('Mounting volume %s', name)
+    logger.info('Mounting volume %s, shared: %s', name, is_shared)
     mountpoint = volume_mountpoint(name)
+    device = volume_device(name)
+    logger.info('Mountpoint for %s: %s, device: %s', name, mountpoint, device)
     if is_shared:
         with volume_lock:
-            if not os.path.ismount(mountpoint):
+            if os.path.ismount(mountpoint):
                 logger.info(
                     'Shared volume %s is already mounted onto %s',
                     name, mountpoint
                 )
             else:
                 if not os.path.exists(mountpoint):
-                    run_cmd(['mkdir', mountpoint])
-
-                run_cmd(['mount', volume_device(name), mountpoint])
+                    os.makedirs(mountpoint)
+                run_cmd(['mount', device, mountpoint])
             return mountpoint
+
     if os.path.ismount(mountpoint):
         logger.info('%s mountpoint is already in use', mountpoint)
         unmount(name, is_schain)
@@ -205,7 +207,7 @@ def mount(name: str, is_schain=True) -> str:
         os.makedirs(mountpoint)
 
     with volume_lock:
-        run_cmd(['mount', volume_device(name), mountpoint])
+        run_cmd(['mount', device, mountpoint])
 
     if is_schain and not is_shared:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
@@ -285,6 +287,10 @@ def log_consumers(consumers):
 
 
 def unmount(name, is_schain=True):
+    if name in SHARED_VOLUMES:
+        logger.warning('Attempt to umount shared %s volume', name)
+        return
+
     log_lsof_for_volume_device(name)
 
     device_consumers = device_users(name)
@@ -301,10 +307,6 @@ def unmount(name, is_schain=True):
     logger.info(f'File is used by {len(file_consumers)}: '
                 f'{file_consumers}')
     log_consumers(file_consumers)
-
-    if name in SHARED_VOLUMES:
-        logger.warning('Attempt to umount shared %s volume', name)
-        return
 
     device = volume_device(name)
     cmd = ['umount', device]
