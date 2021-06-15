@@ -14,11 +14,14 @@ from core import (
     file_users,
     mountpoint_users,
     physical_volume_from_group,
+    run_cmd,
+    volume_device,
     volume_mountpoint
 )
 
 FIRST_VOLUME_NAME = 'vol-a'
 SECOND_VOLUME_NAME = 'vol_b'
+SHARED_VOLUME = 'shared-space'
 
 
 def test_create_remove(vg):
@@ -79,7 +82,32 @@ def test_mount_unmount(vg):
         path(FIRST_VOLUME_NAME)
 
     remove(FIRST_VOLUME_NAME)
-    assert not os.path.exists(os.path.join(FILESTORAGE_MAPPING, FIRST_VOLUME_NAME))
+    assert not os.path.exists(
+        os.path.join(
+            FILESTORAGE_MAPPING,
+            FIRST_VOLUME_NAME
+        )
+    )
+
+
+@pytest.fixture
+def tmp_shared(vg):
+    yield SHARED_VOLUME
+    if SHARED_VOLUME in volumes():
+        device = volume_device(SHARED_VOLUME)
+        mountpoint = volume_mountpoint(SHARED_VOLUME)
+        if os.path.ismount(mountpoint):
+            run_cmd(['umount', device])
+
+
+def test_create_remove_shared(vg, tmp_shared):
+    create(SHARED_VOLUME, '250m')
+    lvs = volumes()
+    assert SHARED_VOLUME in lvs
+
+    remove(SHARED_VOLUME)
+    lvs = volumes()
+    assert SHARED_VOLUME in lvs
 
 
 def aquire_volume(volume_name):

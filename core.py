@@ -22,11 +22,18 @@ import os
 import subprocess
 import time
 from functools import partial
-from threading import Lock
+# from threading import Lock
+from multiprocessing import Lock
 
 import psutil
 
-from config import MOUNTPOINT_BASE, PHYSICAL_VOLUME, VOLUME_GROUP, FILESTORAGE_MAPPING
+from config import (
+    MOUNTPOINT_BASE,
+    PHYSICAL_VOLUME,
+    VOLUME_GROUP,
+    FILESTORAGE_MAPPING,
+    SHARED_VOLUMES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +166,9 @@ def create(name: str, size_unit: str) -> None:
 
 
 def remove(name: str, is_schain=True) -> None:
+    if name in SHARED_VOLUMES:
+        logger.warning('Attempt to remove shared %s volume', name)
+        return
     mountpoint = volume_mountpoint(name)
     logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
@@ -172,21 +182,41 @@ def remove(name: str, is_schain=True) -> None:
 
 
 def mount(name: str, is_schain=True) -> str:
-    logger.info(f'Mounting volume {name}')
+    is_shared = name in SHARED_VOLUMES
+    logger.info('Mounting volume %s, shared: %s', name, is_shared)
     mountpoint = volume_mountpoint(name)
+    device = volume_device(name)
+    logger.info('Mountpoint for %s: %s, device: %s', name, mountpoint, device)
+    if is_shared:
+        with volume_lock:
+            if os.path.ismount(mountpoint):
+                logger.info(
+                    'Shared volume %s is already mounted onto %s',
+                    name, mountpoint
+                )
+            else:
+                if not os.path.exists(mountpoint):
+                    os.makedirs(mountpoint)
+                run_cmd(['mount', device, mountpoint])
+            return mountpoint
+
     if os.path.ismount(mountpoint):
-        logger.warning(f'Volume {name} is already mounted on {mountpoint}')
+        logger.info('%s mountpoint is already in use', mountpoint)
         unmount(name, is_schain)
     if not os.path.exists(mountpoint):
-        run_cmd(['mkdir', mountpoint])
+        os.makedirs(mountpoint)
 
     with volume_lock:
-        run_cmd(['mount', volume_device(name), mountpoint])
+        run_cmd(['mount', device, mountpoint])
 
-    if is_schain:
+    if is_schain and not is_shared:
         filestorage_path = os.path.join(mountpoint, 'filestorage')
         filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
-        os.symlink(filestorage_path, filestorage_link_path, target_is_directory=True)
+        os.symlink(
+            filestorage_path,
+            filestorage_link_path,
+            target_is_directory=True
+        )
         logger.info(f'Symlink was created in {filestorage_link_path}')
     return mountpoint
 
@@ -257,6 +287,10 @@ def log_consumers(consumers):
 
 
 def unmount(name, is_schain=True):
+    if name in SHARED_VOLUMES:
+        logger.warning('Attempt to umount shared %s volume', name)
+        return
+
     log_lsof_for_volume_device(name)
 
     device_consumers = device_users(name)
