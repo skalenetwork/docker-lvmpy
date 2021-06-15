@@ -3,7 +3,7 @@ import pathlib
 import requests
 import subprocess
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor
 
 import docker
 import pytest
@@ -267,3 +267,31 @@ def test_shared_volume(shared_volume):
             c1.remove(force=True)
         if c2:
             c2.remove(force=True)
+
+
+def create_remove_container(name, volumes):
+    client = docker.client.from_env()
+    c1 = client.containers.run(
+        image=IMAGE,
+        name=name,
+        detach=True,
+        cap_add=['SYS_ADMIN'],
+        volumes=volumes
+    )
+    time.sleep(3)
+    c1.remove(force=True)
+    return 'Success'
+
+
+def test_shared_volume_concurrent(shared_volume):
+    with ProcessPoolExecutor(max_workers=5) as e:
+        futures = [
+            e.submit(
+                create_remove_container,
+                name=f'test-{i}',
+                volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+            )
+            for i in range(3)
+        ]
+        for f in as_completed(futures):
+            assert f.result() == 'Success'
