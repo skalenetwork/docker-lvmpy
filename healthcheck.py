@@ -1,6 +1,5 @@
 import traceback
 from contextlib import contextmanager
-from functools import partial
 
 import docker
 
@@ -16,6 +15,10 @@ def is_btrfs_loaded():
 
 
 class ContainerNotRunningError(Exception):
+    pass
+
+
+class ExecFailedError(Exception):
     pass
 
 
@@ -99,31 +102,26 @@ class Healthcheck:
     @contextmanager
     def btrfs_snapshot(self):
         c = self.client.containers.get(self.container)
-        c.erun = partial(c.exec_run, workdir='/test')
+
+        def crun(*args, **kwargs):
+            r = c.exec_run(*args, **kwargs, workdir='/test')
+            if r.exit_code != 0:
+                print('Command failed {r}')
+                raise ExecFailedError(r.output)
+
         try:
             print('Installing btrfs-progs')
-            r = c.exec_run(['apk', 'add', 'btrfs-progs'])
-            assert r.exit_code == 0, r
+            crun(['apk', 'add', 'btrfs-progs'])
             print('Creating subvolume')
-            r = c.erun(['btrfs', 'subvolume', 'create', 'test-sub'])
-            assert r.exit_code == 0, r
+            crun(['btrfs', 'subvolume', 'create', 'test-sub'])
             print('Creating snapshot')
-            r = c.erun([
-                'btrfs',
-                'subvolume',
-                'snapshot',
-                'test-sub',
-                'test-snap'
-            ])
-            assert r.exit_code == 0, r
+            crun(['btrfs', 'subvolume', 'snapshot', 'test-sub', 'test-snap'])
             yield 'Subvolume and snapshots are created'
         finally:
             print('Removing subvolume')
-            r = c.erun(['btrfs', 'subvolume', 'delete', 'test-sub'])
-            assert r.exit_code == 0, r
+            crun(['btrfs', 'subvolume', 'delete', 'test-sub'])
             print('Removing snapshot')
-            r = c.erun(['btrfs', 'subvolume', 'delete', 'test-snap'])
-            assert r.exit_code == 0, r
+            crun(['btrfs', 'subvolume', 'delete', 'test-snap'])
 
     def run(self):
         with self.lvmpy_volume():
