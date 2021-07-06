@@ -1,5 +1,6 @@
 import traceback
 from contextlib import contextmanager
+from functools import partial
 
 import docker
 
@@ -55,7 +56,8 @@ class Healthcheck:
         self.client.containers.run(
             name=self.container,
             image=image,
-            command='sleep 30',
+            command='sleep 500',
+            cap_add=['SYS_ADMIN'],
             detach=True,
             volumes={
                 self.volume: {'bind': mount_path, 'mode': mode}
@@ -94,15 +96,42 @@ class Healthcheck:
         finally:
             self.remove_simple_container()
 
-    def create_btrfs_snapshot(self):
-        pass
+    @contextmanager
+    def btrfs_snapshot(self):
+        c = self.client.containers.get(self.container)
+        c.erun = partial(c.exec_run, workdir='/test')
+        try:
+            print('Installing btrfs-progs')
+            r = c.exec_run(['apk', 'add', 'btrfs-progs'])
+            assert r.exit_code == 0, r
+            print('Creating subvolume')
+            r = c.erun(['btrfs', 'subvolume', 'create', 'test-sub'])
+            assert r.exit_code == 0, r
+            print('Creating snapshot')
+            r = c.erun([
+                'btrfs',
+                'subvolume',
+                'snapshot',
+                'test-sub',
+                'test-snap'
+            ])
+            assert r.exit_code == 0, r
+            yield 'Subvolume and snapshots are created'
+        finally:
+            print('Removing subvolume')
+            r = c.erun(['btrfs', 'subvolume', 'delete', 'test-sub'])
+            assert r.exit_code == 0, r
+            print('Removing snapshot')
+            r = c.erun(['btrfs', 'subvolume', 'delete', 'test-snap'])
+            assert r.exit_code == 0, r
 
     def run(self):
         with self.lvmpy_volume():
             with self.lvmpy_container():
                 self.check_volume_status()
                 self.check_container_status()
-                self.create_btrfs_snapshot()
+                with self.btrfs_snapshot() as msg:
+                    print(msg)
 
 
 def main():
