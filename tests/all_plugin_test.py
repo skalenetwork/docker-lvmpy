@@ -1,10 +1,15 @@
 import os
+import pathlib
 import requests
 import subprocess
 import time
-from concurrent.futures import ProcessPoolExecutor
-import docker
+from concurrent.futures import as_completed, ProcessPoolExecutor
 
+import docker
+import pytest
+
+from config import FILESTORAGE_MAPPING
+from core import run_cmd, volumes, volume_device, volume_mountpoint
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -16,6 +21,8 @@ CONTAINER = 'pytest_lvmpy'
 
 NUMBER_OF_CONTAINERS = 6
 ITERATIONS = 2
+
+SHARED_VOLUME = 'shared-space'
 
 
 client = docker.client.from_env()
@@ -84,10 +91,10 @@ def test_container_exec_using_volume(capfd):
     assert res.returncode == 0
 
 
-def create_volumes():
+def create_volumes(volumes_number=NUMBER_OF_CONTAINERS):
     volumes = [
         client.volumes.create(name=f'test{i}', driver='lvmpy', driver_opts={})
-        for i in range(NUMBER_OF_CONTAINERS)
+        for i in range(volumes_number)
     ]
     return volumes
 
@@ -97,7 +104,7 @@ def remove_volumes(volumes):
         volume.remove(force=True)
 
 
-def create_containers():
+def create_containers(container_number=NUMBER_OF_CONTAINERS):
     containers = [
         client.containers.run(image=IMAGE,
                               name=f'test{i}',
@@ -106,7 +113,7 @@ def create_containers():
                               volumes={f'test{i}': {
                                   'bind': '/data', 'mode': 'rw'}
                               })
-        for i in range(NUMBER_OF_CONTAINERS)
+        for i in range(container_number)
     ]
     for c in containers:
         print(c)
@@ -207,3 +214,84 @@ def test_get_block_device_size():
     )
     data = response.json()
     assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
+
+
+def test_container_mapping():
+    volumes = create_volumes(1)
+    containers = create_containers(1)
+    link_path = os.path.join(FILESTORAGE_MAPPING, volumes[0].name)
+
+    assert pathlib.Path(link_path).is_symlink(), link_path
+
+    remove_containers(containers)
+    remove_volumes(volumes)
+    assert not os.path.exists(link_path), link_path
+
+
+@pytest.fixture
+def shared_volume():
+    v = client.volumes.create(
+        name=SHARED_VOLUME,
+        driver='lvmpy',
+        driver_opts={}
+    )
+    yield v
+    if SHARED_VOLUME in volumes():
+        device = volume_device(SHARED_VOLUME)
+        mountpoint = volume_mountpoint(SHARED_VOLUME)
+        if os.path.ismount(mountpoint):
+            run_cmd(['umount', device])
+        run_cmd(['lvremove', '-f', device])
+
+
+def test_shared_volume(shared_volume):
+    c1, c2 = None, None
+    try:
+        c1 = client.containers.run(
+            image=IMAGE,
+            name='test-shared-0',
+            detach=True,
+            cap_add=['SYS_ADMIN'],
+            volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+        )
+        c2 = client.containers.run(
+            image=IMAGE,
+            name='test-shared-1',
+            detach=True,
+            cap_add=['SYS_ADMIN'],
+            volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+        )
+        time.sleep(3)
+    finally:
+        if c1:
+            c1.remove(force=True)
+        if c2:
+            c2.remove(force=True)
+
+
+def create_remove_container(name, volumes):
+    client = docker.client.from_env()
+    c1 = client.containers.run(
+        image=IMAGE,
+        name=name,
+        detach=True,
+        cap_add=['SYS_ADMIN'],
+        volumes=volumes
+    )
+    time.sleep(3)
+    c1.remove(force=True)
+    return 'Success'
+
+
+def test_shared_volume_concurrent(shared_volume):
+    with ProcessPoolExecutor(max_workers=5) as e:
+        futures = [
+            e.submit(
+                create_remove_container,
+                name=f'test-{i}',
+                volumes={SHARED_VOLUME: {'bind': '/data', 'mode': 'rw'}}
+            )
+            for i in range(3)
+        ]
+        for f in as_completed(futures):
+            assert f.result() == 'Success'
