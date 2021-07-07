@@ -18,6 +18,10 @@ class ContainerNotRunningError(Exception):
     pass
 
 
+class ExecFailedError(Exception):
+    pass
+
+
 class Healthcheck:
     def __init__(
         self, container: str,
@@ -55,7 +59,8 @@ class Healthcheck:
         self.client.containers.run(
             name=self.container,
             image=image,
-            command='sleep 30',
+            command='sleep 500',
+            cap_add=['SYS_ADMIN'],
             detach=True,
             volumes={
                 self.volume: {'bind': mount_path, 'mode': mode}
@@ -94,11 +99,37 @@ class Healthcheck:
         finally:
             self.remove_simple_container()
 
+    @contextmanager
+    def btrfs_snapshot(self):
+        c = self.client.containers.get(self.container)
+
+        def crun(*args, **kwargs):
+            r = c.exec_run(*args, **kwargs, workdir='/test')
+            if r.exit_code != 0:
+                print('Command failed {r}')
+                raise ExecFailedError(r.output)
+
+        try:
+            print('Installing btrfs-progs')
+            crun(['apk', 'add', 'btrfs-progs'])
+            print('Creating subvolume')
+            crun(['btrfs', 'subvolume', 'create', 'test-sub'])
+            print('Creating snapshot')
+            crun(['btrfs', 'subvolume', 'snapshot', 'test-sub', 'test-snap'])
+            yield 'Subvolume and snapshots are created'
+        finally:
+            print('Removing subvolume')
+            crun(['btrfs', 'subvolume', 'delete', 'test-sub'])
+            print('Removing snapshot')
+            crun(['btrfs', 'subvolume', 'delete', 'test-snap'])
+
     def run(self):
         with self.lvmpy_volume():
             with self.lvmpy_container():
                 self.check_volume_status()
                 self.check_container_status()
+                with self.btrfs_snapshot() as msg:
+                    print(msg)
 
 
 def main():
