@@ -1,9 +1,17 @@
+import logging
 import traceback
 from contextlib import contextmanager
 
 import docker
+import requests
+
+from config import VOLUME_LIST_ROUTE
+from core import run_cmd
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_btrfs_loaded():
@@ -22,7 +30,33 @@ class ExecFailedError(Exception):
     pass
 
 
-class Healthcheck:
+class EndpointCheck:
+    def __init__(self, url: str = VOLUME_LIST_ROUTE):
+        self.url = url
+
+    def run(self) -> bool:
+        retries = 5
+        res, code, err = None, None, None
+        for attempt in range(retries):
+            try:
+                res = requests.post(self.url)
+                code = res.status_code
+            except Exception as e:
+                err = e
+                logger.exception('Error during checking lvmpy health')
+            else:
+                break
+        print(res, code, err)
+
+        if code == 200:
+            logger.info('Lvmpy is healthy %s', res)
+            return True
+        else:
+            logger.error('Lvmpy is not healthy %d %s', code, err)
+            return False
+
+
+class PreinstallCheck:
     def __init__(
         self, container: str,
         volume: str,
@@ -34,7 +68,7 @@ class Healthcheck:
         self.client = docker.from_env()
 
     def create_volume_using_driver(self) -> docker.models.volumes.Volume:
-        print('Creating lvmpy volume ...')
+        print('Creating lvmpy volume')
         driver = 'lvmpy'
         self.client.volumes.create(
             name=self.volume, driver=driver,
@@ -43,7 +77,7 @@ class Healthcheck:
         print('Lvmpy volume was created')
 
     def remove_volume_using_driver(self):
-        print('Removing lvmpy volume ...')
+        print('Removing lvmpy volume')
         try:
             self.client.volumes.get(self.volume).remove()
         except docker.errors.NotFound:
@@ -52,7 +86,7 @@ class Healthcheck:
         print('Lvmpy volume was removed')
 
     def create_simple_container(self) -> docker.models.containers.Container:
-        print('Creating simple container ...')
+        print('Creating simple container')
         mount_path = '/test'
         mode = 'rw'
         image = 'alpine:latest'
@@ -69,7 +103,7 @@ class Healthcheck:
         print('Simple container was created')
 
     def remove_simple_container(self):
-        print('Removing simple container ...')
+        print('Removing simple container')
         try:
             self.client.containers.get(self.container).remove(force=True)
         except docker.errors.NotFound:
@@ -132,13 +166,23 @@ class Healthcheck:
                     print(msg)
 
 
+def heal_service(ec: EndpointCheck = None):
+    ec = ec or EndpointCheck()
+    if not ec.run():
+        print('Lvmpy is ill. Restarting the service')
+        run_cmd(['systemctl', 'restart', 'docker-lvmpy'])
+        print('Lvmpy has been restarted')
+        return True
+    return False
+
+
 def main():
-    hc = Healthcheck(
+    pc = PreinstallCheck(
         container='healthcheck-container',
         volume='healthcheck-volume'
     )
     try:
-        hc.run()
+        pc.run()
     except Exception:
         traceback.print_exc()
         print('Driver is not healthy')

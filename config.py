@@ -28,7 +28,10 @@ SHARED_VOLUMES = ('shared-space',)
 FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING')
 
 LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
+CRON_LOG_PATH = '/var/log/docker-lvmpy/cron.log'
 LOG_FILE_SIZE_MB = 100
 LOG_FILE_SIZE_BYTES = LOG_FILE_SIZE_MB * 1000001
 LOG_BACKUP_COUNT = 3
 LOG_FORMAT = '[%(asctime)s %(levelname)s] %(name)s:%(lineno)d - %(threadName)s - %(message)s'  # noqa
+
+VOLUME_LIST_ROUTE = 'http://127.0.0.1:7373/VolumeDriver.List'
