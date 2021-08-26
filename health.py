@@ -38,6 +38,7 @@ class EndpointCheck:
         retries = 5
         res, code, err = None, None, None
         for attempt in range(retries):
+            logger.debug(f'Checking lvmpy endpoint. Attempt: {attempt}')
             try:
                 res = requests.post(self.url)
                 code = res.status_code
@@ -46,7 +47,6 @@ class EndpointCheck:
                 logger.exception('Error during checking lvmpy health')
             else:
                 break
-        print(res, code, err)
 
         if code == 200:
             logger.info('Lvmpy is healthy %s', res)
