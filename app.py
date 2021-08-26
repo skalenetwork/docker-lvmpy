@@ -76,7 +76,6 @@ def ok(out_data: dict = None):
 
 
 def error(err, code: int = 400):
-    exit(1)
     return response({'Err': err}, code)
 
 
