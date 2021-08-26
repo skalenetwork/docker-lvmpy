@@ -29,7 +29,6 @@ FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING')
 
 LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
 CRON_LOG_PATH = '/var/log/docker-lvmpy/cron.log'
-CRON_ERR_LOG_PATH = '/var/log/docker-lvmpy/cron-err.log'
 LOG_FILE_SIZE_MB = 100
 LOG_FILE_SIZE_BYTES = LOG_FILE_SIZE_MB * 1000001
 LOG_BACKUP_COUNT = 3
