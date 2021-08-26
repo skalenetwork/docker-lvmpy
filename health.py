@@ -170,7 +170,8 @@ def heal_service(ec: EndpointCheck = None):
     ec = ec or EndpointCheck()
     if not ec.run():
         print('Lvmpy is ill. Restarting the service')
-        run_cmd(['systemctl', 'restart', 'docker-lvmpy'])
+        res = run_cmd(['systemctl', 'restart', 'docker-lvmpy'])
+        print(f'Lvmpy {res}')
         print('Lvmpy has been restarted')
         return True
     return False

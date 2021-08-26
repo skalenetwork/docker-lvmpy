@@ -76,6 +76,7 @@ def ok(out_data: dict = None):
 
 
 def error(err, code: int = 400):
+    exit(1)
     return response({'Err': err}, code)
 
 
@@ -199,9 +200,9 @@ def volumes_list():
 @app.route('/VolumeDriver.Capabilities', methods=['POST'])
 def capabilites():
     return ok({
-      "Capabilities": {
-        "Scope": "global"
-      }
+        "Capabilities": {
+            "Scope": "global"
+        }
     })
 
 
