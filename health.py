@@ -1,4 +1,5 @@
 import logging
+import time
 import traceback
 from contextlib import contextmanager
 
@@ -47,6 +48,7 @@ class EndpointCheck:
                 logger.exception('Error during checking lvmpy health')
             else:
                 break
+            time.sleep(2)
 
         if code == 200:
             logger.info('Lvmpy is healthy %s', res)

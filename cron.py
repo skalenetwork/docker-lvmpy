@@ -2,7 +2,7 @@ import logging
 
 import crontab
 
-from config import CRON_LOG_PATH
+from config import CRON_LOG_PATH, CRON_SCHEDULE_MINUTES
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def init_cron():
             job = c.new(
                 command=cron_line
             )
-            job.minute.every(1)
+            job.minute.every(CRON_SCHEDULE_MINUTES)
 
 
 if __name__ == '__main__':

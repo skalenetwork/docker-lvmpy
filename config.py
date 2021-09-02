@@ -35,3 +35,4 @@ LOG_BACKUP_COUNT = 3
 LOG_FORMAT = '[%(asctime)s %(levelname)s] %(name)s:%(lineno)d - %(threadName)s - %(message)s'  # noqa
 
 VOLUME_LIST_ROUTE = 'http://127.0.0.1:7373/VolumeDriver.List'
+CRON_SCHEDULE_MINUTES = 3
