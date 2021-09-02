@@ -2,13 +2,17 @@ import docker
 import mock
 import pytest
 
-from healthcheck import Healthcheck
+from health import (
+    EndpointCheck,
+    PreinstallCheck,
+    heal_service
+)
 from core import run_cmd
 
 
 @pytest.fixture
 def hc():
-    h = Healthcheck(container='test-container', volume='test-volume')
+    h = PreinstallCheck(container='test-container', volume='test-volume')
     yield h
     h.remove_simple_container()
     h.remove_volume_using_driver()
@@ -88,3 +92,11 @@ def disable_btrfs():
 def test_btrfs_not_loaded(vg, hc, disable_btrfs):
     with pytest.raises(docker.errors.APIError):
         hc.run()
+
+
+def test_heal_service():
+    r = heal_service()
+    assert r is False
+    broken_ec = EndpointCheck(url='http://127.0.0.1:3333')
+    r = heal_service(broken_ec)
+    assert r is True
