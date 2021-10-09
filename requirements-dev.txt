@@ -1,6 +1,6 @@
 flake8==3.8.3
 mock==3.0.5
 pytest==5.4.3
-pytest-cov==2.9.0
+pytest-cov==3.0.0
 codecov==2.1.9
 sh==1.14.1
