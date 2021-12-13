@@ -23,16 +23,16 @@ mkdir -p $CODE_PATH $DOCKER_PLUGIN_CONFIG $DRIVER_CONFIG $LOG_PATH
 systemctl daemon-reload
 systemctl stop docker-lvmpy || true
 
-echo 'Creating required files ...'
+echo 'Creating required files'
 cd $BASE_DIR
 cp docker/lvmpy.json $DOCKER_PLUGIN_CONFIG
 cp systemd/docker-lvmpy.service $SYSTEMD_CONFIG_PATH
-cp app.py core.py config.py cleanup.py healthcheck.py requirements.txt $CODE_PATH
+cp app.py core.py config.py cleanup.py health.py cron.py requirements.txt $CODE_PATH
 echo "PHYSICAL_VOLUME=$PHYSICAL_VOLUME" > $DRIVER_CONFIG/lvm-environment
 echo "VOLUME_GROUP=$VOLUME_GROUP" >> $DRIVER_CONFIG/lvm-environment
 echo "FILESTORAGE_MAPPING=$FILESTORAGE_MAPPING" >> $DRIVER_CONFIG/lvm-environment
 
-echo 'Installing requirements ...'
+echo 'Installing requirements'
 cd $CODE_PATH
 pip3 install virtualenv
 virtualenv --python=python3 venv
@@ -41,12 +41,14 @@ pip install -r requirements.txt
 export PYTHONPATH=$CODE_PATH
 python cleanup.py "$PHYSICAL_VOLUME" "$VOLUME_GROUP"
 
-echo 'Enabling service ...'
+echo 'Enabling service'
 systemctl daemon-reload
 systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
 echo 'Service is up'
 
-echo 'Checking driver health ...'
-python healthcheck.py
+echo 'Checking driver health'
+python health.py
+echo 'Ensuring lvmpy healing cronjob'
+python cron.py
 echo 'Lvmpy installation finished'
