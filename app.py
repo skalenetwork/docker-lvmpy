@@ -199,9 +199,9 @@ def volumes_list():
 @app.route('/VolumeDriver.Capabilities', methods=['POST'])
 def capabilites():
     return ok({
-      "Capabilities": {
-        "Scope": "global"
-      }
+        "Capabilities": {
+            "Scope": "global"
+        }
     })
 
 
