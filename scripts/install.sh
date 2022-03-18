@@ -47,8 +47,7 @@ systemctl enable docker-lvmpy
 systemctl restart docker-lvmpy
 echo 'Service is up'
 
-sleep 10
-journalctl -u docker-lvmpy.service | tail -n 500
+sleep 2
 echo 'Checking driver health'
 python health.py
 echo 'Ensuring lvmpy healing cronjob'
