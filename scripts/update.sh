@@ -57,8 +57,8 @@ systemctl restart docker-lvmpy
 
 echo 'Service is up'
 
-echo 'Checking driver health'
-python health.py
+echo 'Skipping driver healthcheck'
+# python health.py
 echo 'Ensuring lvmpy healing cronjob'
 python cron.py
 echo 'Lvmpy update finished'
