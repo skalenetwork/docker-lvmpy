@@ -1,0 +1,13 @@
+Source: docker-lvmpy
+Section: python
+Priority: extra
+Maintainer: SKALE Labs team <support@skalelabs.com>
+Build-Depends: debhelper (>= 9), python, dh-virtualenv (>= 0.7)
+Standards-Version: 3.9.5
+
+Package: docker-lvmpy
+Architecture: any
+Pre-Depends: dpkg (>= 1.16.1), python3 (>= 3.6), ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}
+Description: SKALE docker lvm2 volume plugin
+ SKALE docker lvm2 volume plugin
