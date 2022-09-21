@@ -5,12 +5,11 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/docker-lvmpy/
-ExecStart=/opt/docker-lvmpy/venv/bin/python3 app.py
-EnvironmentFile=/etc/docker-lvmpy/lvm-environment
-Restart=always
+WorkingDirectory=/opt/venvs/docker-lvmpy/
+ExecStart=/opt/venvs/docker-lvmpy/bin/python3 app.py
+EnvironmentFile=/etc/docker-lvmpy/docker-lvmpy.conf
+Restart=never
 KillSignal=SIGINT
-StandardError=syslog
 NotifyAccess=all
 
 [Install]
