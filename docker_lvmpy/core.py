@@ -53,8 +53,15 @@ class LvmPyError(Exception):
 
 volume_lock = Lock()
 
-subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
-                         stdout=subprocess.PIPE)
+subprocess.run = partial(
+    subprocess.run,
+    stderr=subprocess.PIPE,
+    stdout=subprocess.PIPE
+)
+
+
+def is_configured():
+    return FILESTORAGE_MAPPING and PHYSICAL_VOLUME and VOLUME_GROUP
 
 
 def run_cmd(cmd, retries=3):

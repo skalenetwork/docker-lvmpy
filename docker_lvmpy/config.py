@@ -24,8 +24,8 @@ MOUNTPOINT_BASE = '/mnt/'
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = os.getenv('VOLUME_GROUP')
 SHARED_VOLUMES = ('shared-space',)
-
 FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING')
+DEFAULT_CONFIG_FILE = '/etc/docker-lvmpy/lvmpy.conf'
 
 LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
 CRON_LOG_PATH = '/var/log/docker-lvmpy/cron.log'
