@@ -20,6 +20,7 @@
 import json
 import logging
 import time
+import warning
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 
@@ -27,19 +28,24 @@ from flask import Flask, Response, g, request
 from werkzeug.exceptions import InternalServerError
 
 from core import (
-    ensure_volume_group,
     create as create_volume,
-    remove as remove_volume,
-    mount as mount_volume,
-    unmount as unmount_volume,
-    path as volume_path,
+    ensure_volume_group,
     get as get_volume,
     get_block_device_size,
+    is_configured,
+    mount as mount_volume,
+    path as volume_path,
+    remove as remove_volume,
+    unmount as unmount_volume,
     volumes as list_volumes
 )
 from config import (
-    LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
-    LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
+    DEFAULT_CONFIG_FILE,
+    LOG_BACKUP_COUNT,
+    LOG_FILE_SIZE_BYTES,
+    LOG_FORMAT,
+    LOG_PATH,
+    PHYSICAL_VOLUME
 )
 
 
@@ -86,8 +92,12 @@ def handle_500(e):
 
 
 @app.before_first_request
-def enusre_lvm():
-    g.start_time = time.time()
+def enusre_configuration():
+    while not is_configured():
+        warning.warn(
+            'Config is incorrect! Waiting for the valid configuration in %s',
+            DEFAULT_CONFIG_FILE
+        )
     ensure_volume_group()
 
 
