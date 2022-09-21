@@ -1,0 +1,9 @@
+include README.md LICENSE requirements*.txt .gitignore
+
+recursive-include debian *
+prune debian/.debhelper
+
+recursive-include etc *
+recursive-include systemd *.service
+
+global-exclude *~ *.swp *debhelper* *.substvars files
