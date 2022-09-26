@@ -4,6 +4,7 @@ recursive-include debian *
 prune debian/.debhelper
 
 recursive-include etc *
+recursive-include docker *
 recursive-include systemd *.service
 
 global-exclude *~ *.swp *debhelper* *.substvars files
