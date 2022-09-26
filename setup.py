@@ -4,7 +4,7 @@ from docker_lvmpy import version
 
 
 dependencies = [
-    'Flask==1.0.2',
+    'Flask==2.2.2',
     'itsdangerous==2.0.1',
     'psutil==5.9.0',
     'docker==5.0.3',
@@ -44,6 +44,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     entry_points={
         'console_scripts': {
+          'lvmpy = docker_lvmpy.app:main'
         }
     },
     classifiers=[
