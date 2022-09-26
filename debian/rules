@@ -1,4 +1,7 @@
 #!/usr/bin/make -f
 
+SNAKE=/usr/bin/python3.8
+EXTRA_REQUIREMENTS=--upgrade-pip --preinstall "setuptools>=17.1" --preinstall "wheel"
+
 %:
-	dh $@ --with python-virtualenv --with systemd
+	dh $@ --with python-virtualenv --with systemd --python $(SNAKE) $(EXTRA_REQUIREMENTS)
