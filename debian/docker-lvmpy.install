@@ -1,2 +1,2 @@
 docker/lvmpy.json /etc/docker/plugins/
-systemd/docker-lvmpy.service /lib/systemd/system
+systemd/docker-lvmpy.service /lib/systemd/system/
