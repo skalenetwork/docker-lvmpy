@@ -27,7 +27,7 @@ from multiprocessing import Lock
 
 import psutil
 
-from config import (
+from .config import (
     MOUNTPOINT_BASE,
     PHYSICAL_VOLUME,
     VOLUME_GROUP,

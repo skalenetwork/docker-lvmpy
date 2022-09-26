@@ -1,5 +1,6 @@
 import sys
-from core import (
+
+from .core import (
     physical_volumes,
     physical_volume_from_group,
     remove_physical_volume,
