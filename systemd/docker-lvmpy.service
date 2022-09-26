@@ -6,9 +6,9 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/venvs/docker-lvmpy/
-ExecStart=/opt/venvs/docker-lvmpy/bin/python3 app.py
+ExecStart=/opt/venvs/docker-lvmpy/bin/lvmpy
 EnvironmentFile=/etc/docker-lvmpy/docker-lvmpy.conf
-Restart=never
+Restart=no
 KillSignal=SIGINT
 NotifyAccess=all
 
