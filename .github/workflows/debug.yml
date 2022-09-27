@@ -34,7 +34,7 @@ jobs:
         echo "Version $VERSION"
     
     - name: Rename deb package
-      run: mv ../${{ steps.deb.outputs.pkg }} ../docker-lvmpy-${{ env.VERSION }}.deb
+      run: mv ${{ steps.deb.outputs.pkg }} ../docker-lvmpy-${{ env.VERSION }}.deb
 
     - name: Show dir
       run: ls -altr ../

@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup  # type: ignore
 
-from docker_lvmpy import version
+VERSION_PATH = 'VERSION'
+
+
+def find_version():
+    with open(VERSION_PATH) as version_file:
+        return version_file.read().strip()
 
 
 dependencies = [
@@ -28,7 +33,7 @@ dev_dependencies = {
 
 setup(
     name='docker-lvmpy',
-    version=version,
+    version=find_version(),
     include_package_data=True,
     description='SKALE docker lvm2 volume plugin',
     long_description_markdown_filename='README.md',
