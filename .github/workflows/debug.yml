@@ -21,7 +21,7 @@ jobs:
       run: dpkg-buildpackage -us -uc -b -d
 
     - name: Get deb package
-      id: debname
+      id: deb
       run: "::set-output name=pkg::ls ../*.deb"
 
     - name: Calculate version
@@ -33,7 +33,7 @@ jobs:
         echo "Version $VERSION"
     
     - name: Rename deb package
-      run: mv ../${{ debname.outputs.pkg }} ../env.VERSION
+      run: mv ../${{ steps.deb.outputs.pkg }} ../docker-lvmpy-${{ env.VERSION }}.deb
 
     - name: Show dir
       run: ls -altr ../
