@@ -22,7 +22,8 @@ jobs:
 
     - name: Get deb package
       id: deb
-      run: "::set-output name=pkg::ls ../*.deb"
+      run: |
+        echo "::set-output name=pkg::$(ls ../*.deb)"
 
     - name: Calculate version
       run: |
