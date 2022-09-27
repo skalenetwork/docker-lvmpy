@@ -21,7 +21,8 @@ jobs:
       run: dpkg-buildpackage -us -uc -b -d
 
     - name: Get deb package
-      run: "::set-output name=debname::ls ../*.deb"
+      id: debname
+      run: "::set-output name=pkg::ls ../*.deb"
 
     - name: Calculate version
       run: |
@@ -32,7 +33,7 @@ jobs:
         echo "Version $VERSION"
     
     - name: Rename deb package
-      run: mv ../${{ debname }} ../env.VERSION
+      run: mv ../${{ debname.outputs.pkg }} ../env.VERSION
 
     - name: Show dir
       run: ls -altr ../
