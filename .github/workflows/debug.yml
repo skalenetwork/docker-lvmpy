@@ -1,0 +1,25 @@
+name: Build and publish
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    if: github.event.pull_request.merged
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install ubuntu dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install build-essential debhelper devscripts equivs python3.8 dh-virtualenv
+    - name: Checkout code
+      uses: actions/checkout@master
+
+    - name: Build deb package
+      run: dpkg-buildpackage -us -uc -b -d
+
+    - name: List bulded package
+      run: ls -altr ../
