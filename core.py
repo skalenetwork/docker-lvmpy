@@ -143,6 +143,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
     vgs = volume_groups()
     if name in vgs:
         logger.warning(f'Volume group {name} already created')
+        ensure_group_active(group=name)
         return
 
     ensure_physical_volume(physical_volume=physical_volume)
@@ -365,9 +366,36 @@ def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
         logger.error('Group %s does not exist', group)
 
 
-def activate_volume_group(group: str) -> None:
+def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
+    inactive = []
+    output = run_cmd(['vgscan'])
+    for line in output.split('\n'):
+        result = list(filter(lambda s: s == '', line.split()))[0]
+        status, device = result[:2]
+        # device example
+        # '/dev/test/t1'
+        device = device[1:-1]  # remove colums
+        _, group, volume = device.split('/')
+        name = device
+        if group == group and status == 'inactive':
+            inactive.append(name)
+    return inactive
+
+
+def activate_group(group: Optional[str] = VOLUME_GROUP) -> None:
+    logger.info(f'Changing {group} to active')
+    with volume_lock:
+        run_cmd(['vgchange', '-ay', group])
+
+
+def ensure_group_active(group: Optional[str] = VOLUME_GROUP) -> None:
     groups = volume_groups()
     if group in groups:
-        run_cmd(['vgchange', '-ay', group])
+        inactive = get_inactive_volumes(group=group)
+        if len(inactive) > 0:
+            logger.warning(
+                f'Volume group {group} is not active. Inactive volumes: {inactive}'
+            )
+            activate_group(group=group)
     else:
         logger.error('Group %s does not exist', group)
