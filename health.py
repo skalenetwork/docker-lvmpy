@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 import traceback
 from contextlib import contextmanager
@@ -185,7 +186,7 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     return False
 
 
-def ensure_volumes_active(group: str) -> bool:
+def ensure_volumes_active(group: str) -> None:
     run_cmd(['vgchange', '-ay', group])
     vols = volumes(group=group)
     for vol in vols:
@@ -193,6 +194,9 @@ def ensure_volumes_active(group: str) -> bool:
 
 
 def main():
+    vg = sys.argv[1]
+    if vg:
+        ensure_volumes_active(vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
         volume='healthcheck-volume'
