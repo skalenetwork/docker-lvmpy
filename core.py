@@ -352,3 +352,7 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
 
 def activate_volume(volume: str) -> str:
     return run_cmd(['lvchange', '-ay', volume])
+
+
+def activate_volume_group(volume_group: str) -> str:
+    return run_cmd(['vgchange', '-ay', volume_group])
