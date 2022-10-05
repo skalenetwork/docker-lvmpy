@@ -2,12 +2,18 @@ import logging
 import time
 import traceback
 from contextlib import contextmanager
+from typing import Optional
 
 import docker
 import requests
 
 from config import VOLUME_LIST_ROUTE
-from core import run_cmd
+from core import (
+    activate_volume,
+    activate_volume_group,
+    run_cmd,
+    volumes
+)
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
@@ -168,7 +174,7 @@ class PreinstallCheck:
                     print(msg)
 
 
-def heal_service(ec: EndpointCheck = None):
+def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     ec = ec or EndpointCheck()
     if not ec.run():
         print('Lvmpy is ill. Restarting the service')
@@ -177,6 +183,13 @@ def heal_service(ec: EndpointCheck = None):
         print('Lvmpy has been restarted')
         return True
     return False
+
+
+def ensure_volumes_active(group: str) -> bool:
+    run_cmd(['vgchange', '-ay', group])
+    vols = volumes(group=group)
+    for vol in vols:
+        run_cmd(['lvchange', '-ay', vol])
 
 
 def main():
