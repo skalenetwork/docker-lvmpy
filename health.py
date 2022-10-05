@@ -10,10 +10,9 @@ import requests
 
 from config import VOLUME_LIST_ROUTE
 from core import (
-    activate_volume,
+    activate_volumes,
     activate_volume_group,
-    run_cmd,
-    volumes
+    run_cmd
 )
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
@@ -187,10 +186,8 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
 
 
 def ensure_volumes_active(group: str) -> None:
-    run_cmd(['vgchange', '-ay', group])
-    vols = volumes(group=group)
-    for vol in vols:
-        run_cmd(['lvchange', '-ay', vol])
+    activate_volume_group(group=group)
+    activate_volumes(group=group)
 
 
 def main():

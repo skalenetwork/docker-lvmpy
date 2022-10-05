@@ -24,6 +24,7 @@ import time
 from functools import partial
 # from threading import Lock
 from multiprocessing import Lock
+from typing import Optional
 
 import psutil
 
@@ -350,9 +351,15 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     return size
 
 
-def activate_volume(volume: str) -> str:
-    return run_cmd(['lvchange', '-ay', volume])
+def activate_volume(volume: str) -> None:
+    run_cmd(['lvchange', '-ay', volume])
 
 
-def activate_volume_group(volume_group: str) -> str:
-    return run_cmd(['vgchange', '-ay', volume_group])
+def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
+    vols = volumes(group=group)
+    for vol in vols:
+        activate_volume(vol)
+
+
+def activate_volume_group(group: str) -> None:
+    run_cmd(['vgchange', '-ay', group])
