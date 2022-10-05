@@ -348,3 +348,7 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     result = run_cmd(['blockdev', '--getsize64', device], retries=1)
     size = int(result.strip())
     return size
+
+
+def activate_volume(volume: str) -> str:
+    return run_cmd(['lvchange', '-ay', volume])
