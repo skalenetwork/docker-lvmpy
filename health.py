@@ -9,11 +9,7 @@ import docker
 import requests
 
 from config import VOLUME_LIST_ROUTE
-from core import (
-    activate_volumes,
-    activate_volume_group,
-    run_cmd
-)
+from core import ensure_group_active, run_cmd
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
@@ -185,15 +181,10 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     return False
 
 
-def ensure_volumes_active(group: str) -> None:
-    activate_volume_group(group=group)
-    activate_volumes(group=group)
-
-
 def main():
     if len(sys.argv) > 1:
         vg = sys.argv[1]
-        ensure_volumes_active(vg)
+        ensure_group_active(group=vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
         volume='healthcheck-volume'
