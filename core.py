@@ -356,9 +356,13 @@ def activate_volume(volume: str) -> None:
 
 
 def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
-    vols = volumes(group=group)
-    for vol in vols:
-        activate_volume(vol)
+    groups = volume_groups()
+    if group in groups:
+        vols = volumes(group=group)
+        for vol in vols:
+            activate_volume(vol)
+    else:
+        logger.error('Group %s does not exist', group)
 
 
 def activate_volume_group(group: str) -> None:
