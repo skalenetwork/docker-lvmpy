@@ -191,8 +191,8 @@ def ensure_volumes_active(group: str) -> None:
 
 
 def main():
-    vg = sys.argv[1]
-    if vg:
+    if len(sys.argv) > 1:
+        vg = sys.argv[1]
         ensure_volumes_active(vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
