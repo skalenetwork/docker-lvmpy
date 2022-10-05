@@ -362,4 +362,8 @@ def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
 
 
 def activate_volume_group(group: str) -> None:
-    run_cmd(['vgchange', '-ay', group])
+    groups = volume_groups()
+    if group in groups:
+        run_cmd(['vgchange', '-ay', group])
+    else:
+        logger.error('Group %s does not exist', group)
