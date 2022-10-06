@@ -367,18 +367,21 @@ def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
 
 
 def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
+    output = run_cmd(['lvscan'])
+    if not output:  # no volumes
+        return []
     inactive = []
-    output = run_cmd(['vgscan'])
     for line in output.split('\n'):
-        result = list(filter(lambda s: s != '', line.split()))[0]
+        result = list(filter(lambda s: s.strip() != '', line.split()))
+        if not result:
+            break
         status, device = result[:2]
         # device example
         # '/dev/test/t1'
-        device = device[1:-1]  # remove colums
+        device = device[2:-1]  # remove colums and / at the beginning
         _, group, volume = device.split('/')
-        name = device
         if group == group and status == 'inactive':
-            inactive.append(name)
+            inactive.append(volume)
     return inactive
 
 
