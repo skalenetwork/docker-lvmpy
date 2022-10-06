@@ -182,5 +182,5 @@ def test_volume_group_activation(pv, vg):
     assert get_inactive_volumes(group=vg) == []
     run_cmd(['vgchange', '-an', vg])
     assert get_inactive_volumes(group=vg) == [FIRST_VOLUME_NAME]
-    ensure_volume_group(group=vg)
+    ensure_volume_group(name=vg)
     assert get_inactive_volumes(group=vg) == []
