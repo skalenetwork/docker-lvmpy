@@ -352,20 +352,6 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     return size
 
 
-def activate_volume(volume: str) -> None:
-    run_cmd(['lvchange', '-ay', volume])
-
-
-def activate_volumes(group: Optional[str] = VOLUME_GROUP) -> None:
-    groups = volume_groups()
-    if group in groups:
-        vols = volumes(group=group)
-        for vol in vols:
-            activate_volume(vol)
-    else:
-        logger.error('Group %s does not exist', group)
-
-
 def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
     output = run_cmd(['lvscan'])
     if not output:  # no volumes
@@ -376,8 +362,7 @@ def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
         if not result:
             break
         status, device = result[:2]
-        # device example
-        # '/dev/test/t1'
+        # device example: '/dev/test/t1'
         device = device[2:-1]  # remove colums and / at the beginning
         _, group, volume = device.split('/')
         if group == group and status == 'inactive':
