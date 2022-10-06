@@ -93,17 +93,20 @@ def test_mount_unmount(vg):
 
 
 @pytest.fixture
-def tmp_shared(vg):
-    yield SHARED_VOLUME
-    if SHARED_VOLUME in volumes():
-        device = volume_device(SHARED_VOLUME)
-        mountpoint = volume_mountpoint(SHARED_VOLUME)
-        if os.path.ismount(mountpoint):
-            run_cmd(['umount', device])
+def shared(vg):
+    try:
+        create(SHARED_VOLUME, '250m')
+        yield SHARED_VOLUME
+    finally:
+        if SHARED_VOLUME in volumes():
+            device = volume_device(SHARED_VOLUME)
+            mountpoint = volume_mountpoint(SHARED_VOLUME)
+            if os.path.ismount(mountpoint):
+                run_cmd(['umount', device])
+            run_cmd(['lvremove', '-f', volume_device(SHARED_VOLUME)])
 
 
-def test_create_remove_shared(vg, tmp_shared):
-    create(SHARED_VOLUME, '250m')
+def test_create_remove_shared(vg, shared):
     lvs = volumes()
     assert SHARED_VOLUME in lvs
 
