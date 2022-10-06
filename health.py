@@ -56,7 +56,7 @@ class EndpointCheck:
             logger.info('Lvmpy is healthy %s', res)
             return True
         else:
-            logger.error('Lvmpy is not healthy %d %s', code, err)
+            logger.error('Lvmpy is not healthy %s %s', code, err)
             return False
 
 
