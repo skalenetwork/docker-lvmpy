@@ -11,7 +11,9 @@ from core import (
     mount, path, unmount,
     get as get_volume,
     device_users,
+    ensure_volume_group,
     file_users,
+    get_inactive_volumes,
     mountpoint_users,
     physical_volume_from_group,
     run_cmd,
@@ -167,8 +169,18 @@ def test_file_users(vg):
     assert file_consumers_finished == []
 
 
-def test_physical_volume_from_group(pv, vg) -> str:
+def test_physical_volume_from_group(pv, vg):
     block_device = physical_volume_from_group(vg)
     assert block_device == pv
     block_device = physical_volume_from_group('not-existing-vg')
     assert block_device is None
+
+
+def test_volume_group_activation(pv, vg):
+    assert get_inactive_volumes(group=vg) == []
+    create(FIRST_VOLUME_NAME, '250m')
+    assert get_inactive_volumes(group=vg) == []
+    run_cmd(['vgchange', '-an', vg])
+    assert get_inactive_volumes(group=vg) == [FIRST_VOLUME_NAME]
+    ensure_volume_group(group=vg)
+    assert get_inactive_volumes(group=vg) == []
