@@ -370,7 +370,7 @@ def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
     inactive = []
     output = run_cmd(['vgscan'])
     for line in output.split('\n'):
-        result = list(filter(lambda s: s == '', line.split()))[0]
+        result = list(filter(lambda s: s != '', line.split()))[0]
         status, device = result[:2]
         # device example
         # '/dev/test/t1'
