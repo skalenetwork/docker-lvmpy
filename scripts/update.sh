@@ -46,9 +46,9 @@ echo "FILESTORAGE_MAPPING=$FILESTORAGE_MAPPING" >> $DRIVER_CONFIG/lvm-environmen
 echo 'Installing requirements'
 cd $CODE_PATH
 source venv/bin/activate
-pip install -r requirements.txt
+pip3.6 install -r requirements.txt
 export PYTHONPATH=.
-python cleanup.py "$PHYSICAL_VOLUME" "$VOLUME_GROUP"
+python3.6 cleanup.py "$PHYSICAL_VOLUME" "$VOLUME_GROUP"
 
 echo 'Enabling service'
 systemctl daemon-reload
@@ -58,7 +58,7 @@ systemctl restart docker-lvmpy
 echo 'Service is up'
 
 echo 'Checking driver health'
-python health.py
+python3.6 health.py $VOLUME_GROUP
 echo 'Ensuring lvmpy healing cronjob'
-python cron.py
+python3.6 cron.py
 echo 'Lvmpy update finished'

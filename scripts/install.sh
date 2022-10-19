@@ -34,8 +34,8 @@ echo "FILESTORAGE_MAPPING=$FILESTORAGE_MAPPING" >> $DRIVER_CONFIG/lvm-environmen
 
 echo 'Installing requirements'
 cd $CODE_PATH
-pip3 install virtualenv
-virtualenv --python=python3 venv
+pip3.6 install virtualenv
+virtualenv --python=python3.6 venv
 . venv/bin/activate
 pip install -r requirements.txt
 export PYTHONPATH=$CODE_PATH
@@ -49,7 +49,7 @@ echo 'Service is up'
 
 sleep 2
 echo 'Checking driver health'
-python health.py
+python3.6 health.py $VOLUME_GROUP
 echo 'Ensuring lvmpy healing cronjob'
-python cron.py
+python3.6 cron.py
 echo 'Lvmpy installation finished'
