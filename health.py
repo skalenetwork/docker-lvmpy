@@ -1,13 +1,15 @@
 import logging
+import sys
 import time
 import traceback
 from contextlib import contextmanager
+from typing import Optional
 
 import docker
 import requests
 
 from config import VOLUME_LIST_ROUTE
-from core import run_cmd
+from core import ensure_group_active, run_cmd
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
@@ -54,7 +56,7 @@ class EndpointCheck:
             logger.info('Lvmpy is healthy %s', res)
             return True
         else:
-            logger.error('Lvmpy is not healthy %d %s', code, err)
+            logger.error('Lvmpy is not healthy %s %s', code, err)
             return False
 
 
@@ -168,7 +170,7 @@ class PreinstallCheck:
                     print(msg)
 
 
-def heal_service(ec: EndpointCheck = None):
+def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     ec = ec or EndpointCheck()
     if not ec.run():
         print('Lvmpy is ill. Restarting the service')
@@ -180,6 +182,9 @@ def heal_service(ec: EndpointCheck = None):
 
 
 def main():
+    if len(sys.argv) > 1:
+        vg = sys.argv[1]
+        ensure_group_active(group=vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
         volume='healthcheck-volume'

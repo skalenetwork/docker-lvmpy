@@ -8,13 +8,17 @@ from core import (
 
 @pytest.fixture(scope='module')
 def pv():
-    ensure_physical_volume(PHYSICAL_VOLUME)
-    yield PHYSICAL_VOLUME
-    remove_physical_volume(PHYSICAL_VOLUME)
+    try:
+        ensure_physical_volume(PHYSICAL_VOLUME)
+        yield PHYSICAL_VOLUME
+    finally:
+        remove_physical_volume(PHYSICAL_VOLUME)
 
 
 @pytest.fixture(scope='module')
 def vg(pv):
-    ensure_volume_group(VOLUME_GROUP, pv)
-    yield VOLUME_GROUP
-    remove_volume_group(VOLUME_GROUP)
+    try:
+        ensure_volume_group(VOLUME_GROUP, pv)
+        yield VOLUME_GROUP
+    finally:
+        remove_volume_group(VOLUME_GROUP)

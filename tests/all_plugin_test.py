@@ -138,10 +138,12 @@ def running_containers_number():
 
 def test_containers_creation():
     volumes = create_volumes()
-    containers = create_containers()
-    time.sleep(15)
-    remove_containers(containers)
-    remove_volumes(volumes)
+    try:
+        containers = create_containers()
+        time.sleep(15)
+    finally:
+        remove_containers(containers)
+        remove_volumes(volumes)
 
 
 def create_remove_volume(name):
@@ -235,13 +237,15 @@ def shared_volume():
         driver='lvmpy',
         driver_opts={}
     )
-    yield v
-    if SHARED_VOLUME in volumes():
-        device = volume_device(SHARED_VOLUME)
-        mountpoint = volume_mountpoint(SHARED_VOLUME)
-        if os.path.ismount(mountpoint):
-            run_cmd(['umount', device])
-        run_cmd(['lvremove', '-f', device])
+    try:
+        yield v
+    finally:
+        if SHARED_VOLUME in volumes():
+            device = volume_device(SHARED_VOLUME)
+            mountpoint = volume_mountpoint(SHARED_VOLUME)
+            if os.path.ismount(mountpoint):
+                run_cmd(['umount', device])
+            run_cmd(['lvremove', '-f', device])
 
 
 def test_shared_volume(shared_volume):
