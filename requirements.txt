@@ -3,4 +3,4 @@ itsdangerous==2.0.1
 psutil==5.9.0
 docker==5.0.3
 sh==1.14.2
-python-crontab==2.6.0
+python-crontab==2.7.1
