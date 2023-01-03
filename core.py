@@ -24,6 +24,7 @@ import time
 from functools import partial
 # from threading import Lock
 from multiprocessing import Lock
+from typing import Optional
 
 import psutil
 
@@ -142,6 +143,7 @@ def ensure_volume_group(name=VOLUME_GROUP, physical_volume=PHYSICAL_VOLUME):
     vgs = volume_groups()
     if name in vgs:
         logger.warning(f'Volume group {name} already created')
+        ensure_group_active(group=name)
         return
 
     ensure_physical_volume(physical_volume=physical_volume)
@@ -348,3 +350,40 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     result = run_cmd(['blockdev', '--getsize64', device], retries=1)
     size = int(result.strip())
     return size
+
+
+def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
+    output = run_cmd(['lvscan'])
+    if not output:  # no volumes
+        return []
+    inactive = []
+    for line in output.split('\n'):
+        result = list(filter(lambda s: s.strip() != '', line.split()))
+        if not result:
+            break
+        status, device = result[:2]
+        # device example: '/dev/test/t1'
+        device = device[2:-1]  # remove colums and / at the beginning
+        _, group, volume = device.split('/')
+        if group == group and status == 'inactive':
+            inactive.append(volume)
+    return inactive
+
+
+def activate_group(group: Optional[str] = VOLUME_GROUP) -> None:
+    logger.info(f'Changing {group} to active')
+    with volume_lock:
+        run_cmd(['vgchange', '-ay', group])
+
+
+def ensure_group_active(group: Optional[str] = VOLUME_GROUP) -> None:
+    groups = volume_groups()
+    if group in groups:
+        inactive = get_inactive_volumes(group=group)
+        if len(inactive) > 0:
+            logger.warning(
+                f'Volume group {group} is not active. Inactive volumes: {inactive}'
+            )
+            activate_group(group=group)
+    else:
+        logger.error('Group %s does not exist', group)
