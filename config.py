@@ -20,14 +20,30 @@
 import os
 
 
-MOUNTPOINT_BASE = '/mnt/'
+MOUNTPOINT_BASE = os.getenv('MNT_DIR', '/mnt/')
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = os.getenv('VOLUME_GROUP')
 SHARED_VOLUMES = ('shared-space',)
 
-FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING')
+FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING', '/var/lib/skale/filestorage')
 
+LOG_DIR = '/var/log/docker-lvmpy'
 LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
+LOG_PATH = os.path.join(LOG_DIR, 'lvmpy.log')
+CRON_LOG_PATH = os.path.join(LOG_DIR, 'cron.log')
+
+OPT_DIR = '/opt/docker-lvmpy/'
+DOCKER_PLUGIN_DIR = '/etc/docker/plugins'
+DOCKER_PLUGIN_CONFIG_PATH = os.path.join(DOCKER_PLUGIN_DIR, 'lvmpy.json')
+
+ETC_DIR = '/etc/docker-lvmpy'
+ETC_CONFIG_PATH = os.path.join(ETC_DIR, 'lvm-environment')
+
+SERVICE_DIR = '/etc/systemd/system/'
+SERVICE_EXEC_START = '/usr/local/bin/lvmpy'
+SERVICE_PATH = os.path.join(SERVICE_DIR, 'docker-lvmpy.service')
+SERVICE_NAME = 'docker-lvmpy'
+
 CRON_LOG_PATH = '/var/log/docker-lvmpy/cron.log'
 LOG_FILE_SIZE_MB = 100
 LOG_FILE_SIZE_BYTES = LOG_FILE_SIZE_MB * 1000001
@@ -36,3 +52,5 @@ LOG_FORMAT = '[%(asctime)s %(levelname)s] %(name)s:%(lineno)d - %(threadName)s -
 
 VOLUME_LIST_ROUTE = 'http://127.0.0.1:7373/VolumeDriver.List'
 CRON_SCHEDULE_MINUTES = 3
+
+PORT = 7373
