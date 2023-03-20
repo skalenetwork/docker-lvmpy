@@ -15,7 +15,7 @@ def test_ensure_config_files():
     assert os.path.isfile('/etc/docker-lvmpy/lvm-environment')
     with open('/etc/docker-lvmpy/lvm-environment') as etc_file:
         etc_content = etc_file.read()
-        assert etc_content == 'PHYSICAL_VOLUME=/dev/sdtVOLUME_GROUP=schains\nFILESTORAGE_MAPPING=/mnt/filestorage'  # noqa
+        assert etc_content == 'PHYSICAL_VOLUME=/dev/sdt\nVOLUME_GROUP=schains\nFILESTORAGE_MAPPING=/mnt/filestorage'  # noqa
 
     assert os.path.isfile('/etc/systemd/system/docker-lvmpy.service')
     with open('/etc/systemd/system/docker-lvmpy.service') as service_file:

@@ -82,6 +82,14 @@ def generate_plugin_config(port=PORT):
     }
 
 
+def generate_etc_config(block_device, volume_group, filestorage_mapping):
+    return '\n'.join([
+        f'PHYSICAL_VOLUME={block_device}',
+        f'VOLUME_GROUP={volume_group}',
+        f'FILESTORAGE_MAPPING={filestorage_mapping}'
+    ])
+
+
 def ensure_config_files(
     block_device=PHYSICAL_VOLUME,
     volume_group=VOLUME_GROUP,
@@ -103,13 +111,13 @@ def ensure_config_files(
     with open(SERVICE_PATH, 'w') as service_file:
         service_file.write(service_config)
 
+    etc_config = generate_etc_config(
+        block_device=block_device,
+        volume_group=volume_group,
+        filestorage_mapping=filestorage_mapping
+    )
     with open(ETC_CONFIG_PATH, 'w') as etc_config_file:
-        config = '\n'.join([
-            f'PHYSICAL_VOLUME={block_device}'
-            f'VOLUME_GROUP={volume_group}',
-            f'FILESTORAGE_MAPPING={filestorage_mapping}'
-        ])
-        etc_config_file.write(config)
+        etc_config_file.write(etc_config)
 
 
 def setup(
