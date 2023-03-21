@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_folders():
+    logger.info('Creating folders')
     for path in (
         DOCKER_PLUGIN_DIR,
         ETC_DIR,
@@ -39,6 +40,7 @@ def create_folders():
 
 
 def stop_service(name=SERVICE_NAME):
+    logger.info('Stopping service %s', name)
     run_cmd(['systemctl', 'daemon-reload'])
     try:
         run_cmd(['systemctl', 'stop', name])
@@ -48,12 +50,14 @@ def stop_service(name=SERVICE_NAME):
 
 
 def start_service(name=SERVICE_NAME):
+    logger.info('Starting service %s', name)
     run_cmd(['systemctl', 'daemon-reload'])
     run_cmd(['systemctl', 'enable', name])
     run_cmd(['systemctl', 'start', name])
 
 
 def load_btrfs_kernel_module():
+    logger.info('Loading btrfs kernel module')
     run_cmd(['modprobe', 'btrfs'])
 
 
@@ -98,7 +102,7 @@ def generate_etc_config(block_device, volume_group, filestorage_mapping):
     ])
 
 
-def ensure_config_files(
+def generate_config_files(
     block_device=PHYSICAL_VOLUME,
     volume_group=VOLUME_GROUP,
     filestorage_mapping=FILESTORAGE_MAPPING,
@@ -106,6 +110,8 @@ def ensure_config_files(
     etc_config_path=ETC_CONFIG_PATH,
     port=PORT
 ):
+    logger.info('Generating config files')
+
     docker_plugin_config = generate_plugin_config(port=PORT)
 
     with open(DOCKER_PLUGIN_CONFIG_PATH, 'w') as docker_plugin_config_file:
@@ -144,7 +150,7 @@ def setup(
         volume_group=volume_group
     )
     create_folders()
-    ensure_config_files(
+    generate_config_files(
         block_device=block_device,
         volume_group=volume_group,
         filestorage_mapping=filestorage_mapping,

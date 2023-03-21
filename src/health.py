@@ -182,6 +182,8 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
 
 
 def run_healthcheck(vg=None):
+    logger.info('Running healthcheck with volume group %s', vg)
+
     if vg is not None:
         ensure_group_active(group=vg)
     pc = PreinstallCheck(

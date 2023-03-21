@@ -63,7 +63,7 @@ def run_cmd(cmd, retries=3):
     timeouts = compose_exponantional_timeouts(retries)
     lines = ' '.join(cmd)
     for attempt, timeout in enumerate(timeouts):
-        logger.info(f'Command {lines} attempt {attempt}')
+        logger.info(f'Command |{lines}| attempt {attempt}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
             logger.info(f'Command {lines} success')
