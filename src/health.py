@@ -195,7 +195,7 @@ def run_healthcheck(vg=None):
     except Exception:
         traceback.print_exc()
         print('Driver is not healthy')
-        exit(1)
+        raise
     else:
         print('Driver is healthy')
 
