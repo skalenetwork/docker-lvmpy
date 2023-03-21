@@ -44,7 +44,7 @@ def stop_service(name=SERVICE_NAME):
         run_cmd(['systemctl', 'stop', name])
         run_cmd(['systemctl', 'disable', name])
     except LvmPyError as e:
-        logger.warning('Lvmpy service cannot be stopped %e', e)
+        logger.warning('Lvmpy service cannot be stopped %s', e)
 
 
 def start_service(name=SERVICE_NAME):
