@@ -5,7 +5,7 @@ import importlib.util
 block_cipher = None
 
 a = Analysis(
-    ['app.py'],
+    ['src.app.py'],
     pathex=['.'],
     datas=[],
     hiddenimports=[],
