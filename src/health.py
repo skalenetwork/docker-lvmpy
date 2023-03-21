@@ -181,9 +181,8 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     return False
 
 
-def main():
-    if len(sys.argv) > 1:
-        vg = sys.argv[1]
+def run_healthcheck(vg=None):
+    if vg is not None:
         ensure_group_active(group=vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
@@ -197,6 +196,13 @@ def main():
         exit(1)
     else:
         print('Driver is healthy')
+
+
+def main():
+    vg = None
+    if len(sys.argv) > 1:
+        vg = sys.argv[1]
+    run_healthcheck(vg=vg)
 
 
 if __name__ == '__main__':

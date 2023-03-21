@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from .config import (
@@ -17,9 +18,13 @@ from .config import (
     SERVICE_NAME,
     VOLUME_GROUP
 )
-from .core import run_cmd
+from .core import LvmPyError, run_cmd
 from .cron import init_cron
 from .cleanup import cleanup_volumes
+from .health import run_healthcheck
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_folders():
@@ -35,8 +40,11 @@ def create_folders():
 
 def stop_service(name=SERVICE_NAME):
     run_cmd(['systemctl', 'daemon-reload'])
-    run_cmd(['systemctl', 'stop', name])
-    run_cmd(['systemctl', 'disable', name])
+    try:
+        run_cmd(['systemctl', 'stop', name])
+        run_cmd(['systemctl', 'disable', name])
+    except LvmPyError as e:
+        logger.warning('Lvmpy service cannot be stopped %e', e)
 
 
 def start_service(name=SERVICE_NAME):
@@ -145,13 +153,15 @@ def setup(
         port=port
     )
     start_service(name=service_name)
-    # run_healcheck()
+    run_healthcheck(vg=volume_group)
+    # TODO fix
     init_cron()
 
 
 def main():
     print('Setting up docker-lvmpy server')
     setup()
+    print('Setup of docker-lvmpy completed')
 
 
 if __name__ == '__main__':
