@@ -8,8 +8,8 @@ from typing import Optional
 import docker
 import requests
 
-from config import VOLUME_LIST_ROUTE
-from core import ensure_group_active, run_cmd
+from .config import VOLUME_LIST_ROUTE
+from .core import ensure_group_active, run_cmd
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
