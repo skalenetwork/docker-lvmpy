@@ -50,7 +50,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     entry_points={
         'console_scripts': {
-          'lvmpy = docker_lvmpy.src.app:main'
+          'lvmpy = src.app:main'
         }
     },
     classifiers=[
