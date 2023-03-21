@@ -7,13 +7,13 @@ export FILESTORAGE_MAPPING=$(realpath ./filestorage)
 export PYTHONPATH=${PYTHONPATH}:.
 
 echo 'Installing docker-lvmpy'
-VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 scripts/install.py
+VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 -m src.install
 
 echo 'Running install tests'
 VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=tests/reinstall_test.py tests/
 
 echo 'Updating docker-lvmpy'
-VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 scripts/install.py
+VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 -m src.install
 
 echo 'Running update tests'
 VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=tests/reinstall_test.py tests/

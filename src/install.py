@@ -1,7 +1,7 @@
 import json
 import os
 
-from config import (
+from .config import (
     DOCKER_PLUGIN_DIR,
     DOCKER_PLUGIN_CONFIG_PATH,
     FILESTORAGE_MAPPING,
@@ -17,9 +17,9 @@ from config import (
     SERVICE_NAME,
     VOLUME_GROUP
 )
-from core import run_cmd
-from cron import init_cron
-from cleanup import cleanup_volumes
+from .core import run_cmd
+from .cron import init_cron
+from .cleanup import cleanup_volumes
 
 
 def create_folders():
