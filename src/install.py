@@ -110,7 +110,7 @@ def generate_config_files(
     etc_config_path=ETC_CONFIG_PATH,
     port=PORT
 ):
-    logger.info('Generating config files')
+    logger.info('Generating config files. Exec start [%s]', exec_start)
 
     docker_plugin_config = generate_plugin_config(port=PORT)
 
