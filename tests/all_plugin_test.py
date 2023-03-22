@@ -8,8 +8,8 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 import docker
 import pytest
 
-from config import FILESTORAGE_MAPPING
-from core import run_cmd, volumes, volume_device, volume_mountpoint
+from src.config import FILESTORAGE_MAPPING
+from src.core import run_cmd, volumes, volume_device, volume_mountpoint
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
