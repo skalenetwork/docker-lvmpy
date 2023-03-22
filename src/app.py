@@ -26,7 +26,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, Response, g, request
 from werkzeug.exceptions import InternalServerError
 
-from src.core import (
+from .core import (
     ensure_volume_group,
     create as create_volume,
     remove as remove_volume,
@@ -37,7 +37,7 @@ from src.core import (
     get_block_device_size,
     volumes as list_volumes
 )
-from src.config import (
+from .config import (
     LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
     LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
 )
@@ -205,9 +205,5 @@ def capabilites():
     })
 
 
-def main():
+def run():
     app.run(host=HOST, port=PORT)
-
-
-if __name__ == '__main__':
-    main()
