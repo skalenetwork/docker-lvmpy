@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -ea
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_DIR=$(dirname $DIR)
+
 export FILESTORAGE_MAPPING=$(realpath ./filestorage)
 
+export PYTHONPATH=${PYTHONPATH}:$PROJECT_DIR
+
 . tests/prepare.sh
-export PYTHONPATH=${PYTHONPATH}:.
 
 echo 'Installing docker-lvmpy'
 VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 -m src.install
