@@ -35,7 +35,8 @@ from .core import (
     path as volume_path,
     get as get_volume,
     get_block_device_size,
-    volumes as list_volumes
+    volumes as list_volumes,
+    LvmPyError
 )
 from .config import (
     LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
@@ -81,8 +82,8 @@ def error(err, code: int = 400):
 
 @app.errorhandler(InternalServerError)
 def handle_500(e):
-    logger.error(f'Request failed with 500 code, err={e}')
-    return error(err=e.args[0], code=500)
+    logger.error(f'Request failed with 500 code, err=[{e}]')
+    return error(err='InternalServerError', code=500)
 
 
 @app.before_first_request
@@ -112,10 +113,14 @@ def index():
 def physical_volume_size():
     data = request.get_json(force=True)
     name = data.get('Name') or PHYSICAL_VOLUME
-    return ok({
-        'Name': name,
-        'Size': get_block_device_size(name)
-    })
+    try:
+        return ok({
+            'Name': name,
+            'Size': get_block_device_size(name)
+        })
+    except LvmPyError as e:
+        logger.info('Block device size request failed %s', e)
+        return error('No such volume', code=400)
 
 
 @app.route('/Plugin.Activate', methods=['POST'])

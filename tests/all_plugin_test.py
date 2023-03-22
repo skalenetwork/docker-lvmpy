@@ -215,7 +215,7 @@ def test_get_block_device_size():
         json={'Name': '/dev/None'}
     )
     data = response.json()
-    assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
+    assert data['Err'] == 'No such volume'
 
 
 def test_container_mapping():
