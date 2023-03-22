@@ -1,13 +1,13 @@
 import os
 from src.install import (
     create_folders,
-    ensure_config_files
+    generate_config_files
 )
 
 
 def test_ensure_config_files():
     create_folders()
-    ensure_config_files(
+    generate_config_files(
         block_device='/dev/sdt',
         volume_group='schains',
         filestorage_mapping='/mnt/filestorage'
