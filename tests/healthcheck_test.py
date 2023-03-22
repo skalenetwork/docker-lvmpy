@@ -2,12 +2,12 @@ import docker
 import mock
 import pytest
 
-from health import (
+from src.health import (
     EndpointCheck,
     PreinstallCheck,
     heal_service
 )
-from core import run_cmd
+from src.core import run_cmd
 
 
 @pytest.fixture

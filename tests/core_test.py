@@ -5,8 +5,8 @@ from multiprocessing import Process
 import mock
 import pytest
 
-from config import FILESTORAGE_MAPPING
-from core import (
+from src.config import FILESTORAGE_MAPPING
+from src.core import (
     create, remove, volumes, LvmPyError,
     mount, path, unmount,
     get as get_volume,

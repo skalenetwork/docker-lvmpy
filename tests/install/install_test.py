@@ -1,5 +1,5 @@
 import os
-from scripts.install import (
+from src.install import (
     create_folders,
     ensure_config_files
 )
