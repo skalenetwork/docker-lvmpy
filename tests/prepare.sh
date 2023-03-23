@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ea
 
 if [ -z ${BLOCK_DEVICE} ]; then
     echo 'Creating loopback block device'
@@ -11,3 +11,8 @@ if [ -z ${BLOCK_DEVICE} ]; then
 fi
 
 mkdir ${FILESTORAGE_MAPPING} || true
+systemctl stop docker-lvmpy || true
+
+scripts/build.sh test test
+cp dist/lvmpy-test-Linux-x86_64 /usr/local/bin/lvmpy
+chmod +x /usr/local/bin/lvmpy
