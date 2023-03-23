@@ -22,7 +22,7 @@ def vg(pv):
         ensure_volume_group(VOLUME_GROUP, pv)
         yield VOLUME_GROUP
     finally:
-        vols = volumes(vg=VOLUME_GROUP)
+        vols = volumes(group=VOLUME_GROUP)
         for v in vols:
             remove(v)
         remove_volume_group(VOLUME_GROUP)
