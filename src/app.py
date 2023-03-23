@@ -19,6 +19,7 @@
 
 import json
 import logging
+import os
 import time
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
@@ -39,10 +40,16 @@ from .core import (
     LvmPyError
 )
 from .config import (
-    LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
-    LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
+    LOG_BACKUP_COUNT,
+    LOG_DIR,
+    LOG_FILE_SIZE_BYTES,
+    LOG_FORMAT,
+    LOG_PATH,
+    PHYSICAL_VOLUME
 )
 
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 logging.basicConfig(
     format=LOG_FORMAT,
