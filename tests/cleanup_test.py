@@ -1,11 +1,11 @@
 import pytest
 
-from core import (
+from src.core import (
     physical_volumes,
     run_cmd,
     volume_groups
 )
-from cleanup import (
+from src.cleanup import (
     cleanup_lvmpy_aritifacts,
     is_block_device_exist,
     is_cleanup_needed,

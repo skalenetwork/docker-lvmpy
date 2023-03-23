@@ -8,8 +8,8 @@ from typing import Optional
 import docker
 import requests
 
-from config import VOLUME_LIST_ROUTE
-from core import ensure_group_active, run_cmd
+from .config import VOLUME_LIST_ROUTE
+from .core import ensure_group_active, run_cmd
 
 MIN_BTRFS_VOLUME_SIZE = 209715200
 
@@ -181,9 +181,10 @@ def heal_service(ec: Optional[EndpointCheck] = None) -> bool:
     return False
 
 
-def main():
-    if len(sys.argv) > 1:
-        vg = sys.argv[1]
+def run_healthcheck(vg=None):
+    logger.info('Running healthcheck with volume group %s', vg)
+
+    if vg is not None:
         ensure_group_active(group=vg)
     pc = PreinstallCheck(
         container='healthcheck-container',
@@ -194,9 +195,16 @@ def main():
     except Exception:
         traceback.print_exc()
         print('Driver is not healthy')
-        exit(1)
+        raise
     else:
         print('Driver is healthy')
+
+
+def main():
+    vg = None
+    if len(sys.argv) > 1:
+        vg = sys.argv[1]
+    run_healthcheck(vg=vg)
 
 
 if __name__ == '__main__':

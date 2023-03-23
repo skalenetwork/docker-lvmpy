@@ -8,8 +8,8 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 import docker
 import pytest
 
-from config import FILESTORAGE_MAPPING
-from core import run_cmd, volumes, volume_device, volume_mountpoint
+from src.config import FILESTORAGE_MAPPING
+from src.core import run_cmd, volumes, volume_device, volume_mountpoint
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -215,7 +215,7 @@ def test_get_block_device_size():
         json={'Name': '/dev/None'}
     )
     data = response.json()
-    assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
+    assert data['Err'] == 'No such volume'
 
 
 def test_container_mapping():

@@ -1,5 +1,7 @@
+import logging
 import sys
-from core import (
+
+from .core import (
     physical_volumes,
     physical_volume_from_group,
     remove_physical_volume,
@@ -8,6 +10,8 @@ from core import (
     volumes,
     LvmPyError
 )
+
+logger = logging.getLogger(__name__)
 
 
 def is_block_device_exist(block_device: str) -> bool:
@@ -34,9 +38,8 @@ def cleanup_lvmpy_aritifacts(volume_group: str) -> None:
     remove_physical_volume(pv)
 
 
-def main() -> None:
-    block_device = sys.argv[1]
-    volume_group = sys.argv[2]
+def cleanup_volumes(block_device, volume_group) -> None:
+    logger.info('Cleaning up volumes')
     if not is_lvmpy_environment_valid(block_device, volume_group):
         print(
             'Lvmpy cannot be created. '
@@ -52,6 +55,12 @@ def main() -> None:
             print(f'Cleaning failed with error: {err}')
             exit(2)
     print('Lvmpy cleanup finished')
+
+
+def main():
+    block_device = sys.argv[1]
+    volume_group = sys.argv[2]
+    cleanup_volumes(block_device, volume_group)
 
 
 if __name__ == '__main__':
