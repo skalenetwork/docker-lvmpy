@@ -4,6 +4,8 @@ import subprocess
 import docker
 import pytest
 
+from src.install import setup
+
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = os.getenv('VOLUME_GROUP')
 
@@ -11,28 +13,7 @@ client = docker.from_env()
 
 
 def run_install(block_device=PHYSICAL_VOLUME, volume_group=VOLUME_GROUP):
-    res = subprocess.run(
-        ['scripts/install.sh'],
-        env={
-            'PHYSICAL_VOLUME': block_device,
-            'VOLUME_GROUP': volume_group
-        }
-    )
-    if res.returncode != 0:
-        print(res.stderr.decode('utf-8'))
-        res.check_returncode()
-
-
-def run_update(block_device=PHYSICAL_VOLUME, volume_group=VOLUME_GROUP):
-    res = subprocess.run(
-        ['scripts/update.sh'],
-        env={
-            'PHYSICAL_VOLUME': block_device,
-            'VOLUME_GROUP': volume_group
-        }
-    )
-    if res.returncode != 0:
-        res.check_returncode()
+    setup(block_device=block_device, volume_group=volume_group)
 
 
 def create_loop_back_device():
@@ -56,15 +37,14 @@ def remove_volumes_hard():
 
 def test_install():
     run_install()
-    run_update()
     client.volumes.create(
         name='test-volume',
         driver='lvmpy',
         driver_opts={'size': '200M'}
     )
-    run_update()
+    run_install()
     bd = create_loop_back_device()
     with pytest.raises(subprocess.CalledProcessError):
-        run_update(block_device=bd)
+        run_install(block_device=bd)
     remove_volumes_hard()
-    run_update(block_device=bd)
+    run_install(block_device=bd)
