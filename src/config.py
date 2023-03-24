@@ -27,7 +27,7 @@ SHARED_VOLUMES = ('shared-space',)
 
 FILESTORAGE_MAPPING = os.getenv('FILESTORAGE_MAPPING', '/var/lib/skale/filestorage')
 
-LOG_DIR = '/var/log/docker-lvmpy'
+LOG_DIR = os.getenv('LVMPY_LOG_DIR', '/var/log/docker-lvmpy')
 LOG_PATH = '/var/log/docker-lvmpy/lvmpy.log'
 LOG_PATH = os.path.join(LOG_DIR, 'lvmpy.log')
 CRON_LOG_PATH = os.path.join(LOG_DIR, 'cron.log')
