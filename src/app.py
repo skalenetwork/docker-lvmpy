@@ -19,14 +19,12 @@
 
 import json
 import logging
-import os
 import time
-from logging import StreamHandler
-from logging.handlers import RotatingFileHandler
 
 from flask import Flask, Response, g, request
 from werkzeug.exceptions import InternalServerError
 
+from .config import PHYSICAL_VOLUME
 from .core import (
     ensure_volume_group,
     create as create_volume,
@@ -39,29 +37,10 @@ from .core import (
     volumes as list_volumes,
     LvmPyError
 )
-from .config import (
-    LOG_BACKUP_COUNT,
-    LOG_DIR,
-    LOG_FILE_SIZE_BYTES,
-    LOG_FORMAT,
-    LOG_PATH,
-    PHYSICAL_VOLUME
-)
+from .log import init_logging
 
 
-os.makedirs(LOG_DIR, exist_ok=True)
-
-logging.basicConfig(
-    format=LOG_FORMAT,
-    handlers=[
-        StreamHandler(),
-        RotatingFileHandler(
-            LOG_PATH, maxBytes=LOG_FILE_SIZE_BYTES,
-            backupCount=LOG_BACKUP_COUNT
-        )
-    ],
-    level=logging.INFO
-)
+init_logging()
 
 logger = logging.getLogger(__name__)
 
