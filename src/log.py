@@ -33,16 +33,16 @@ from .config import (
 
 def init_logging():
     ensure_log_dir()
-    configure_logger()
+    configure_logging()
 
 
 def ensure_log_dir():
     os.makedirs(LOG_DIR, exist_ok=True)
 
 
-def configure_logger():
-    lvmpyLogger = logging.getLogger('.'.join(__name__.split('.')[:-1]))
-    lvmpyLogger.setLevel(logging.INFO)
+def configure_logger(logger):
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
     handlers = [
         StreamHandler(),
         RotatingFileHandler(
@@ -52,4 +52,14 @@ def configure_logger():
     ]
     for handler in handlers:
         handler.setFormatter(Formatter(LOG_FORMAT))
-        lvmpyLogger.addHandler(handler)
+        logger.addHandler(handler)
+
+
+def configure_logging():
+    lvmpy_logger = logging.getLogger('.'.join(__name__.split('.')[:-1]))
+    werkzeug_logger = logging.getLogger('werkzeug')
+    urllib3_logger = logging.getLogger('urllib3')
+
+    loggers = [lvmpy_logger, werkzeug_logger, urllib3_logger]
+    for logger in loggers:
+        configure_logger(logger)
