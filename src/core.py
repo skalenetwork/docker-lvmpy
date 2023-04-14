@@ -66,7 +66,7 @@ def run_cmd(cmd, retries=3):
         logger.info(f'Command [{lines}] attempt {attempt}')
         res = subprocess.run(cmd)
         if res.returncode == 0:
-            logger.info(f'Command {lines} success')
+            logger.info(f'Command [{lines}] success')
             return res.stdout.decode('utf-8')
         else:
             err = res.stderr.decode('utf-8')
