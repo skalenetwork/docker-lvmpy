@@ -1,5 +1,5 @@
 itsdangerous==2.1.2
-Flask==2.0.1
+Flask==2.2.5
 psutil==5.9.4
 docker==6.0.1
 sh==1.14.3
