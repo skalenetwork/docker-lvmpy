@@ -142,8 +142,7 @@ def test_containers_creation():
         containers = create_containers()
         time.sleep(15)
     finally:
-        out = run_cmd(['systemctl', '-l', 'status', 'docker-lvmpy'])
-        print('DEBUG HERE', out)
+        run_cmd(['systemctl', '-l', 'status', 'docker-lvmpy'])
         remove_containers(containers)
         remove_volumes(volumes)
 
