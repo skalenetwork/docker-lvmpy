@@ -25,4 +25,7 @@ VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=test
 # echo 'Running update tests'
 # VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=tests/reinstall_test.py tests/
 
+echo 'Show docker-lvmpy status again'
+systemctl -l status docker-lvmpy
+
 BLOCK_DEVICE=$BLOCK_DEVICE tests/finalize.sh
