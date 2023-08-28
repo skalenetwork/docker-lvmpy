@@ -14,10 +14,7 @@ echo 'Installing docker-lvmpy'
 VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 -m src.install
 
 echo 'DEBUG docker-lvmpy status'
-systemctl status docker-lvmpy
-journalctl -xe > all.log && cat all.log
-cat /var/log/syslog | grep 'lvmpy' -C 5
-
+systemctl -l status docker-lvmpy
 
 # cat /var/log/docker-lvmpy/lvmpy.log | tail -n 298
 #
