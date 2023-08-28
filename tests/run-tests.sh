@@ -13,11 +13,12 @@ export PYTHONPATH=${PYTHONPATH}:$PROJECT_DIR
 echo 'Installing docker-lvmpy'
 VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE python3 -m src.install
 
+echo 'DEBUG docker-lvmpy status'
+systemctl status docker-lvmpy
 journalctl -xe > all.log && cat all.log
 
 
 # cat /var/log/docker-lvmpy/lvmpy.log | tail -n 298
-# systemctl status docker-lvmpy
 #
 # echo 'Running install tests'
 # VOLUME_GROUP=schains PHYSICAL_VOLUME=$BLOCK_DEVICE py.test --cov=. --ignore=tests/reinstall_test.py tests/
