@@ -44,7 +44,16 @@ init_logging()
 
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+
+def create_app():
+    app = Flask(__name__)
+    with app.app_context():
+        g.start_time = time.time()
+        ensure_volume_group()
+    return app
+
+
+app = create_app()
 
 HOST = '127.0.0.1'
 PORT = 7373
@@ -66,21 +75,15 @@ def error(err, code: int = 400):
     return response({'Err': err}, code)
 
 
+@app.before_request
+def save_time():
+    g.start_time = time.time()
+
+
 @app.errorhandler(InternalServerError)
 def handle_500(e):
     logger.error(f'Request failed with 500 code, err=[{e}]')
     return error(err='InternalServerError', code=500)
-
-
-@app.before_first_request
-def enusre_lvm():
-    g.start_time = time.time()
-    ensure_volume_group()
-
-
-@app.before_request
-def save_time():
-    g.start_time = time.time()
 
 
 @app.teardown_request

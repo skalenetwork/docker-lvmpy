@@ -9,12 +9,12 @@ def find_version():
 
 
 dependencies = [
-    'Flask==2.2.2',
-    'itsdangerous==2.0.1',
-    'psutil==5.9.0',
-    'docker==5.0.3',
-    'sh==1.14.2',
-    'python-crontab==2.6.0'
+    "itsdangerous==2.1.2",
+    "Flask==2.3.3",
+    "psutil==5.9.4",
+    "docker==6.1.2",
+    "sh==2.0.6",
+    "python-crontab==2.7.1"
 ]
 
 
