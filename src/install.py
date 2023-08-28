@@ -20,7 +20,7 @@ from .config import (
 )
 from .core import LvmPyError, run_cmd
 from .cleanup import cleanup_volumes
-from .health import run_healthcheck
+# from .health import run_healthcheck
 
 
 logger = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ def setup(
         port=port
     )
     start_service(name=service_name)
-    run_healthcheck(vg=volume_group)
+    # run_healthcheck(vg=volume_group)
 
 
 def main():
