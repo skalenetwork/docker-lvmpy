@@ -45,15 +45,7 @@ init_logging()
 logger = logging.getLogger(__name__)
 
 
-def create_app():
-    app = Flask(__name__)
-    with app.app_context():
-        g.start_time = time.time()
-        ensure_volume_group()
-    return app
-
-
-app = create_app()
+app = Flask(__name__)
 
 HOST = '127.0.0.1'
 PORT = 7373
@@ -78,6 +70,11 @@ def error(err, code: int = 400):
 @app.before_request
 def save_time():
     g.start_time = time.time()
+
+
+@app.before_request
+def ensure_vg():
+    ensure_volume_group()
 
 
 @app.errorhandler(InternalServerError)
