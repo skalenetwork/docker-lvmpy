@@ -93,7 +93,7 @@ class PreinstallCheck:
         print('Creating simple container')
         mount_path = '/test'
         mode = 'rw'
-        image = 'alpine:latest'
+        image = 'alpine:3.17.5'
         self.client.containers.run(
             name=self.container,
             image=image,
