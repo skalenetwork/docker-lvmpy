@@ -157,7 +157,7 @@ def create(name: str, size_unit: str) -> None:
         size_unit = size_unit[:-1]
     logger.info(f'Creating volume with size {size_unit}b')
     with volume_lock:
-        run_cmd(['lvcreate', '-L', f'{size_unit}b', '-n', name, VOLUME_GROUP])
+        run_cmd(['lvcreate', '-L', f'{size_unit}b', '-n', name, VOLUME_GROUP, '-y'])
     res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
     if res.returncode != 0:
         stderr = res.stderr.decode('utf-8')
