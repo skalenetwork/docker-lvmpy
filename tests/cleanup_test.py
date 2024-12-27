@@ -17,7 +17,7 @@ from src.cleanup import (
 def lvm_volume(vg):
     name = 'test-volume'
     size = 1024
-    run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, vg])
+    run_cmd(['lvcreate', '-L', f'{size}B', '-n', name, vg, '-y'])
     yield name
     run_cmd(['lvremove', vg, '-y'])
 
