@@ -29,7 +29,7 @@ dev_dependencies = {
         'twine==4.0.1',
         'mock==4.0.3',
         'freezegun==1.2.1',
-        'PyInstaller==5.6.2'
+        'PyInstaller==5.12.0'
     ]
 }
 
