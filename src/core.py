@@ -61,6 +61,7 @@ subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
 def run_cmd(cmd, retries=3):
     res, err = None, None
     timeouts = compose_exponantional_timeouts(retries)
+    logger.info('HERE %s', cmd)
     lines = ' '.join(cmd)
     for attempt, timeout in enumerate(timeouts):
         logger.info(f'Command [{lines}] attempt {attempt}')
