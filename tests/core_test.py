@@ -5,8 +5,8 @@ from multiprocessing import Process
 import mock
 import pytest
 
-from config import FILESTORAGE_MAPPING
-from core import (
+from src.config import FILESTORAGE_MAPPING
+from src.core import (
     create, remove, volumes, LvmPyError,
     mount, path, unmount,
     get as get_volume,
@@ -50,7 +50,7 @@ def test_create_remove(vg):
 def test_remove_not_existing(vg):
     def timeouts_mock(retries):
         return [1 for _ in range(retries)]
-    with mock.patch('core.compose_exponantional_timeouts', timeouts_mock):
+    with mock.patch('src.core.compose_exponantional_timeouts', timeouts_mock):
         with pytest.raises(LvmPyError):
             remove('Not-existing-volume')
 

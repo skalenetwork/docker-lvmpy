@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-set -e
+set -ea
 
 : "${BLOCK_DEVICE?non empty BLOCK_DEVICE option required}"
 
 
 echo "Disable docker-lvmpy service"
-systemctl disable docker-lvmpy
+systemctl stop docker-lvmpy || true
+systemctl disable docker-lvmpy || true
 echo "Removing all volumes from schain volume group"
 lvremove schains --yes || true
 echo "Removing volume group schain"
@@ -24,3 +25,5 @@ if [ ! -z ${BLOCK_DEVICE} ]; then
 fi
 
 rm -rf $FILESTORAGE_MAPPING
+
+rm /usr/local/bin/lvmpy || true
