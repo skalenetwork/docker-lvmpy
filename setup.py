@@ -13,6 +13,7 @@ dependencies = [
     "Flask==2.3.3",
     "psutil==5.9.4",
     "docker==6.1.2",
+    "requests==2.28.1",
     "sh==2.0.6",
     "python-crontab==2.7.1"
 ]
@@ -28,7 +29,7 @@ dev_dependencies = {
         'twine==4.0.1',
         'mock==4.0.3',
         'freezegun==1.2.1',
-        'PyInstaller==5.6.2'
+        'PyInstaller==5.12.0'
     ]
 }
 
