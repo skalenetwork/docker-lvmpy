@@ -20,13 +20,12 @@
 import json
 import logging
 import time
-from logging import StreamHandler
-from logging.handlers import RotatingFileHandler
 
 from flask import Flask, Response, g, request
 from werkzeug.exceptions import InternalServerError
 
-from core import (
+from .config import PHYSICAL_VOLUME
+from .core import (
     ensure_volume_group,
     create as create_volume,
     remove as remove_volume,
@@ -35,27 +34,16 @@ from core import (
     path as volume_path,
     get as get_volume,
     get_block_device_size,
-    volumes as list_volumes
+    volumes as list_volumes,
+    LvmPyError
 )
-from config import (
-    LOG_BACKUP_COUNT, LOG_FILE_SIZE_BYTES,
-    LOG_FORMAT, LOG_PATH, PHYSICAL_VOLUME
-)
+from .log import init_logging
 
 
-logging.basicConfig(
-    format=LOG_FORMAT,
-    handlers=[
-        StreamHandler(),
-        RotatingFileHandler(
-            LOG_PATH, maxBytes=LOG_FILE_SIZE_BYTES,
-            backupCount=LOG_BACKUP_COUNT
-        )
-    ],
-    level=logging.INFO
-)
+init_logging()
 
 logger = logging.getLogger(__name__)
+
 
 app = Flask(__name__)
 
@@ -79,21 +67,20 @@ def error(err, code: int = 400):
     return response({'Err': err}, code)
 
 
-@app.errorhandler(InternalServerError)
-def handle_500(e):
-    logger.error(f'Request failed with 500 code, err={e}')
-    return error(err=e.args[0], code=500)
-
-
-@app.before_first_request
-def enusre_lvm():
-    g.start_time = time.time()
-    ensure_volume_group()
-
-
 @app.before_request
 def save_time():
     g.start_time = time.time()
+
+
+@app.before_request
+def ensure_vg():
+    ensure_volume_group()
+
+
+@app.errorhandler(InternalServerError)
+def handle_500(e):
+    logger.error(f'Request failed with 500 code, err=[{e}]')
+    return error(err='InternalServerError', code=500)
 
 
 @app.teardown_request
@@ -112,10 +99,14 @@ def index():
 def physical_volume_size():
     data = request.get_json(force=True)
     name = data.get('Name') or PHYSICAL_VOLUME
-    return ok({
-        'Name': name,
-        'Size': get_block_device_size(name)
-    })
+    try:
+        return ok({
+            'Name': name,
+            'Size': get_block_device_size(name)
+        })
+    except LvmPyError as e:
+        logger.info('Block device size request failed %s', e)
+        return error('No such volume', code=400)
 
 
 @app.route('/Plugin.Activate', methods=['POST'])
@@ -205,9 +196,5 @@ def capabilites():
     })
 
 
-def main():
+def run():
     app.run(host=HOST, port=PORT)
-
-
-if __name__ == '__main__':
-    main()

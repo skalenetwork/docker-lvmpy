@@ -2,7 +2,7 @@ import logging
 
 import crontab
 
-from config import CRON_LOG_PATH, CRON_SCHEDULE_MINUTES
+from .config import CRON_LOG_PATH, CRON_SCHEDULE_MINUTES
 
 
 logger = logging.getLogger(__name__)

@@ -8,8 +8,8 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 import docker
 import pytest
 
-from config import FILESTORAGE_MAPPING
-from core import run_cmd, volumes, volume_device, volume_mountpoint
+from src.config import FILESTORAGE_MAPPING
+from src.core import run_cmd, volumes, volume_device, volume_mountpoint
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -138,10 +138,13 @@ def running_containers_number():
 
 def test_containers_creation():
     volumes = create_volumes()
-    containers = create_containers()
-    time.sleep(15)
-    remove_containers(containers)
-    remove_volumes(volumes)
+    try:
+        containers = create_containers()
+        time.sleep(15)
+    finally:
+        run_cmd(['systemctl', '-l', 'status', 'docker-lvmpy'])
+        remove_containers(containers)
+        remove_volumes(volumes)
 
 
 def create_remove_volume(name):
@@ -213,7 +216,7 @@ def test_get_block_device_size():
         json={'Name': '/dev/None'}
     )
     data = response.json()
-    assert data['Err'] == 'Command blockdev --getsize64 /dev/None failed, error: blockdev: cannot open /dev/None: No such file or directory\n'  # noqa
+    assert data['Err'] == 'No such volume'
 
 
 def test_container_mapping():
@@ -235,13 +238,15 @@ def shared_volume():
         driver='lvmpy',
         driver_opts={}
     )
-    yield v
-    if SHARED_VOLUME in volumes():
-        device = volume_device(SHARED_VOLUME)
-        mountpoint = volume_mountpoint(SHARED_VOLUME)
-        if os.path.ismount(mountpoint):
-            run_cmd(['umount', device])
-        run_cmd(['lvremove', '-f', device])
+    try:
+        yield v
+    finally:
+        if SHARED_VOLUME in volumes():
+            device = volume_device(SHARED_VOLUME)
+            mountpoint = volume_mountpoint(SHARED_VOLUME)
+            if os.path.ismount(mountpoint):
+                run_cmd(['umount', device])
+            run_cmd(['lvremove', '-f', device])
 
 
 def test_shared_volume(shared_volume):
