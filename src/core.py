@@ -364,8 +364,8 @@ def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
         status, device = result[:2]
         # device example: '/dev/test/t1'
         device = device[2:-1]  # remove colums and / at the beginning
-        _, group, volume = device.split('/')
-        if group == group and status == 'inactive':
+        _, device_group, volume = device.split('/')
+        if device_group == group and status == 'inactive':
             inactive.append(volume)
     return inactive
 
