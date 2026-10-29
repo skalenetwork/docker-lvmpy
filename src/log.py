@@ -19,16 +19,10 @@
 
 import logging
 import os
-from logging import StreamHandler, Formatter
+from logging import Formatter, StreamHandler
 from logging.handlers import RotatingFileHandler
 
-from .config import (
-    LOG_BACKUP_COUNT,
-    LOG_DIR,
-    LOG_FILE_SIZE_BYTES,
-    LOG_FORMAT,
-    LOG_PATH
-)
+from .config import LOG_BACKUP_COUNT, LOG_DIR, LOG_FILE_SIZE_BYTES, LOG_FORMAT, LOG_PATH
 
 
 def init_logging():

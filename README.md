@@ -2,28 +2,29 @@
 
 [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
-A simple volume driver for lvm volumes written in python.
+Docker volume driver for SKALE nodes. Each volume is an LVM logical volume formatted with btrfs.
 
-## Installation
+[node-cli](https://github.com/skalenetwork/node-cli) bundles it as the `lvmpy` submodule. On node init, update and restore it installs the `docker-lvmpy` systemd service, which runs `skale lvmpy run`.
+
+## Development
 
 ```bash
-PHYSICAL_VOLUME='/dev/volume' VOLUME_GROUP=volume_group scripts/install.sh
+uv sync --all-extras
+uv run ruff check
 ```
 
-## Testing
-### Install requirements
+## Tests
+
+The tests create a loop device, an LVM volume group and the `docker-lvmpy` systemd service. Run them as root on a disposable Ubuntu 24.04 machine:
+
 ```bash
-    pip install -r requirements-dev.txt
+sudo env "PATH=$PWD/.venv/bin:$PATH" tests/run-tests.sh
 ```
 
-### Run tests
-```bash
-tests/run-tests.sh
-```
+To use an existing block device instead of a loop device, pass it in. Its contents are wiped:
 
-### Specify block device to install driver
 ```bash
-BLOCK_DEVICE=/dev/sss tests/run-tests.sh
+sudo env "PATH=$PWD/.venv/bin:$PATH" BLOCK_DEVICE=/dev/sdX tests/run-tests.sh
 ```
 
 ## License

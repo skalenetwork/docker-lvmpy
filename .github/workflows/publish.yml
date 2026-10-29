@@ -1,39 +1,32 @@
-name: Build and publish
+name: Publish
 on:
   pull_request:
     types: [closed]
-    branches:
-      - master
-      - develop
-      - beta
-      - stable
+    branches: [develop, beta, stable]
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    runs-on: ubuntu-20.04
+  release:
     if: github.event.pull_request.merged
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
-    - name: Calculate version
-      run: |
-        export BRANCH=${GITHUB_REF##*/}
-        echo "Branch $BRANCH"
-        export VERSION=$(bash ./scripts/calculate_version.sh)
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-        echo "Version $VERSION"
-    - name: Checkout code
-      uses: actions/checkout@master
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.VERSION }}
-        release_name: ${{ env.VERSION }}
-        draft: false
-        prerelease: true
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - id: version
+        env:
+          BRANCH: ${{ github.base_ref }}
+        run: |
+          base=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml)
+          if [ "$BRANCH" = stable ]; then echo "tag=$base" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git fetch --quiet --tags
+          n=0
+          while git rev-parse --quiet --verify "refs/tags/$base-$BRANCH.$n" >/dev/null; do n=$((n + 1)); done
+          echo "tag=$base-$BRANCH.$n" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          prerelease: ${{ github.base_ref != 'stable' }}

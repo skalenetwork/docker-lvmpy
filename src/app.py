@@ -22,33 +22,23 @@ import logging
 import time
 
 from flask import Flask, Response, g, request
-from werkzeug.exceptions import InternalServerError
 
-from .config import PHYSICAL_VOLUME
-from .core import (
-    ensure_volume_group,
-    create as create_volume,
-    remove as remove_volume,
-    mount as mount_volume,
-    unmount as unmount_volume,
-    path as volume_path,
-    get as get_volume,
-    get_block_device_size,
-    volumes as list_volumes,
-    LvmPyError
-)
+from .config import PHYSICAL_VOLUME, PORT
+from .core import LvmPyError, ensure_volume_group, get_block_device_size
+from .core import create as create_volume
+from .core import get as get_volume
+from .core import mount as mount_volume
+from .core import path as volume_path
+from .core import remove as remove_volume
+from .core import unmount as unmount_volume
+from .core import volumes as list_volumes
 from .log import init_logging
-
-
-init_logging()
 
 logger = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
 
-HOST = '127.0.0.1'
-PORT = 7373
 DEFAULT_SIZE = '256m'
 
 
@@ -77,17 +67,16 @@ def ensure_vg():
     ensure_volume_group()
 
 
-@app.errorhandler(InternalServerError)
+@app.errorhandler(500)
 def handle_500(e):
     logger.error(f'Request failed with 500 code, err=[{e}]')
     return error(err='InternalServerError', code=500)
 
 
 @app.teardown_request
-def log_elapsed(response):
+def log_elapsed(_exc: BaseException | None) -> None:
     elapsed = round(time.time() - g.start_time, 2)
     logger.info(f'Request elapsed time: {elapsed}s')
-    return response
 
 
 @app.route('/')
@@ -140,8 +129,7 @@ def remove():
 def mount():
     data = request.get_json(force=True)
     name = data['Name']
-    is_schain = data.get('is_schain', True)
-    mountpoint = mount_volume(name, is_schain)
+    mountpoint = mount_volume(name)
     return ok(out_data={'Mountpoint': mountpoint})
 
 
@@ -197,4 +185,5 @@ def capabilites():
 
 
 def run():
-    app.run(host=HOST, port=PORT)
+    init_logging()
+    app.run(host='127.0.0.1', port=PORT)
