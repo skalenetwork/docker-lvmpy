@@ -2,26 +2,23 @@ import json
 import logging
 import os
 
+from .cleanup import cleanup_volumes
 from .config import (
-    DOCKER_PLUGIN_DIR,
     DOCKER_PLUGIN_CONFIG_PATH,
-    FILESTORAGE_MAPPING,
-    ETC_DIR,
+    DOCKER_PLUGIN_DIR,
     ETC_CONFIG_PATH,
+    ETC_DIR,
+    FILESTORAGE_MAPPING,
     LOG_DIR,
-    OPT_DIR,
     PHYSICAL_VOLUME,
     PORT,
     SERVICE_DIR,
     SERVICE_EXEC_START,
-    SERVICE_PATH,
     SERVICE_NAME,
-    VOLUME_GROUP
+    SERVICE_PATH,
+    VOLUME_GROUP,
 )
 from .core import LvmPyError, run_cmd
-from .cleanup import cleanup_volumes
-# from .health import run_healthcheck
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +29,6 @@ def create_folders():
         DOCKER_PLUGIN_DIR,
         ETC_DIR,
         LOG_DIR,
-        OPT_DIR,
         SERVICE_DIR
     ):
         os.makedirs(path, exist_ok=True)
@@ -60,36 +56,30 @@ def load_btrfs_kernel_module():
     run_cmd(['modprobe', 'btrfs'])
 
 
-def generate_systemd_service_config(
-    exec_start=SERVICE_EXEC_START,
-    etc_config_path=ETC_CONFIG_PATH
-):
+def generate_systemd_service_config(exec_start=SERVICE_EXEC_START):
     return f"""
 [Unit]
 Description=python lvm docker plugin
-Conflicts=getty@tty1.service
 After=network.target
+Before=docker.service
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/docker-lvmpy/
 ExecStart={exec_start}
-EnvironmentFile={etc_config_path}
+EnvironmentFile={ETC_CONFIG_PATH}
 Restart=on-failure
 KillSignal=SIGINT
-StandardError=syslog
-NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target
 """
 
 
-def generate_plugin_config(port=PORT):
+def generate_plugin_config():
     return {
         'Name': 'lvmpy',
         'Description': 'A simple volume driver for lvm volumes written in python',
-        'Addr': f'http://127.0.0.1:{port}'
+        'Addr': f'http://127.0.0.1:{PORT}'
     }
 
 
@@ -106,20 +96,15 @@ def generate_config_files(
     volume_group=VOLUME_GROUP,
     filestorage_mapping=FILESTORAGE_MAPPING,
     exec_start=SERVICE_EXEC_START,
-    etc_config_path=ETC_CONFIG_PATH,
-    port=PORT
 ):
     logger.info('Generating config files. Exec start [%s]', exec_start)
 
-    docker_plugin_config = generate_plugin_config(port=PORT)
+    docker_plugin_config = generate_plugin_config()
 
     with open(DOCKER_PLUGIN_CONFIG_PATH, 'w') as docker_plugin_config_file:
         json.dump(docker_plugin_config, docker_plugin_config_file)
 
-    service_config = generate_systemd_service_config(
-        exec_start=exec_start,
-        etc_config_path=etc_config_path
-    )
+    service_config = generate_systemd_service_config(exec_start=exec_start)
 
     with open(SERVICE_PATH, 'w') as service_file:
         service_file.write(service_config)
@@ -134,15 +119,12 @@ def generate_config_files(
 
 
 def setup(
-    service_name=SERVICE_NAME,
     block_device=PHYSICAL_VOLUME,
     volume_group=VOLUME_GROUP,
     filestorage_mapping=FILESTORAGE_MAPPING,
     exec_start=SERVICE_EXEC_START,
-    etc_config_path=ETC_CONFIG_PATH,
-    port=PORT
 ):
-    stop_service(name=service_name)
+    stop_service()
     load_btrfs_kernel_module()
     cleanup_volumes(
         block_device=block_device,
@@ -154,11 +136,8 @@ def setup(
         volume_group=volume_group,
         filestorage_mapping=filestorage_mapping,
         exec_start=exec_start,
-        etc_config_path=etc_config_path,
-        port=port
     )
-    start_service(name=service_name)
-    # run_healthcheck(vg=volume_group)
+    start_service()
 
 
 def main():

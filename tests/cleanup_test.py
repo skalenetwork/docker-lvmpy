@@ -1,16 +1,7 @@
 import pytest
 
-from src.core import (
-    physical_volumes,
-    run_cmd,
-    volume_groups
-)
-from src.cleanup import (
-    cleanup_lvmpy_aritifacts,
-    is_block_device_exist,
-    is_cleanup_needed,
-    is_lvmpy_environment_valid
-)
+from src.cleanup import cleanup_lvmpy_aritifacts, is_cleanup_needed, is_lvmpy_environment_valid
+from src.core import physical_volumes, run_cmd, volume_groups
 
 
 @pytest.fixture
@@ -36,12 +27,6 @@ def test_is_lvmpy_environment_valid_diff_block_device_with_volumes(
 ):
     block_device = 'block-device'
     assert not is_lvmpy_environment_valid(block_device, vg)
-
-
-def test_is_block_device_exists(pv, vg):
-    assert is_block_device_exist(pv)
-    block_device = 'not-existing-block_device'
-    assert not is_block_device_exist(block_device)
 
 
 def test_is_cleanup_needed_same_block_device(pv, vg):

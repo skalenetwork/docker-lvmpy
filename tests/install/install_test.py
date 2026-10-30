@@ -1,8 +1,6 @@
 import os
-from src.install import (
-    create_folders,
-    generate_config_files
-)
+
+from src.install import create_folders, generate_config_files
 
 
 def test_ensure_config_files():
@@ -20,7 +18,7 @@ def test_ensure_config_files():
     assert os.path.isfile('/etc/systemd/system/docker-lvmpy.service')
     with open('/etc/systemd/system/docker-lvmpy.service') as service_file:
         service_content = service_file.read()
-        assert service_content == '\n[Unit]\nDescription=python lvm docker plugin\nConflicts=getty@tty1.service\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory=/opt/docker-lvmpy/\nExecStart=/usr/local/bin/lvmpy\nEnvironmentFile=/etc/docker-lvmpy/lvm-environment\nRestart=on-failure\nKillSignal=SIGINT\nStandardError=syslog\nNotifyAccess=all\n\n[Install]\nWantedBy=multi-user.target\n'  # noqa
+        assert service_content == '\n[Unit]\nDescription=python lvm docker plugin\nAfter=network.target\nBefore=docker.service\n\n[Service]\nType=simple\nExecStart=/usr/local/bin/lvmpy\nEnvironmentFile=/etc/docker-lvmpy/lvm-environment\nRestart=on-failure\nKillSignal=SIGINT\n\n[Install]\nWantedBy=multi-user.target\n'  # noqa
 
     assert os.path.isfile('/etc/docker/plugins/lvmpy.json')
     with open('/etc/docker/plugins/lvmpy.json') as plugin_file:

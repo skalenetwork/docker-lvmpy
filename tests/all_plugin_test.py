@@ -1,15 +1,15 @@
 import os
 import pathlib
-import requests
 import subprocess
 import time
-from concurrent.futures import as_completed, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import docker
 import pytest
+import requests
 
 from src.config import FILESTORAGE_MAPPING
-from src.core import run_cmd, volumes, volume_device, volume_mountpoint
+from src.core import run_cmd, volume_device, volume_mountpoint, volumes
 
 PHYSICAL_VOLUME = os.getenv('PHYSICAL_VOLUME')
 VOLUME_GROUP = 'schains'
@@ -39,7 +39,7 @@ def test_create_remove_docker_py_info(capfd):
     res = subprocess.run(['docker', 'volume', 'remove', VOLUME])
     assert res.returncode == 0
 
-    assert VOLUME not in client.volumes.list()
+    assert VOLUME not in [v.name for v in client.volumes.list()]
 
 
 def test_create_remove_lsblk_info(capfd):

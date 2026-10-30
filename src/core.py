@@ -21,27 +21,20 @@ import logging
 import os
 import subprocess
 import time
-from functools import partial
-# from threading import Lock
-from multiprocessing import Lock
-from typing import Optional
-
-import psutil
+from threading import Lock
 
 from .config import (
+    FILESTORAGE_MAPPING,
     MOUNTPOINT_BASE,
     PHYSICAL_VOLUME,
+    SHARED_VOLUMES,
     VOLUME_GROUP,
-    FILESTORAGE_MAPPING,
-    SHARED_VOLUMES
 )
 
 logger = logging.getLogger(__name__)
 
 
 LOGICAL_DEVICE_PREFIX = '/dev/mapper/{}-{}'
-UNMOUNT_RETRIES_NUMBER = 3
-DEFAULT_RETRY_NUMBER = 3
 
 
 def compose_exponantional_timeouts(retries: int = 1) -> list:
@@ -54,9 +47,6 @@ class LvmPyError(Exception):
 
 volume_lock = Lock()
 
-subprocess.run = partial(subprocess.run, stderr=subprocess.PIPE,
-                         stdout=subprocess.PIPE)
-
 
 def run_cmd(cmd, retries=3):
     res, err = None, None
@@ -64,16 +54,15 @@ def run_cmd(cmd, retries=3):
     lines = ' '.join(cmd)
     for attempt, timeout in enumerate(timeouts):
         logger.info(f'Command [{lines}] attempt {attempt}')
-        res = subprocess.run(cmd)
+        res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
             logger.info(f'Command [{lines}] success')
-            return res.stdout.decode('utf-8')
+            return res.stdout
         else:
-            err = res.stderr.decode('utf-8')
-            out = res.stdout.decode('utf-8')
+            err = res.stderr
             logger.error(
                 f'Command [{lines}] attempt {attempt} '
-                f'failed with {err}, out: {out}. Sleeping for {timeout}s'
+                f'failed with {err}, out: {res.stdout}. Sleeping for {timeout}s'
             )
             time.sleep(timeout)
     raise LvmPyError(f'Command [{lines}] failed, error: {err}')
@@ -87,12 +76,6 @@ def volume_device(volume):
     # lvm swaps all dashes to en dashes in block device name
     block_device_name = volume.replace('-', '--')
     return LOGICAL_DEVICE_PREFIX.format(VOLUME_GROUP, block_device_name)
-
-
-def lsblk_device(volume):
-    # lvm swaps all dashes to en dashes in block device name
-    block_device_name = volume.replace('-', '--')
-    return f'{VOLUME_GROUP}-{block_device_name}'
 
 
 def physical_volumes():
@@ -125,16 +108,14 @@ def remove_volume_group(volume_group=VOLUME_GROUP):
 
 
 def volume_groups():
-    res = subprocess.run(['vgs', '-o', 'name'])
+    res = subprocess.run(['vgs', '-o', 'name'], capture_output=True, text=True)
     if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
-        logger.error(f'Getting volume groups list failed {stderr}')
+        logger.error(f'Getting volume groups list failed {res.stderr}')
         raise LvmPyError('Getting volume groups list failed')
 
-    stdout = res.stdout.decode('utf-8')
     vgs = list(filter(
         None,
-        map(lambda x: x.strip(), stdout.split('\n'))
+        map(lambda x: x.strip(), res.stdout.split('\n'))
     ))[1:]
     return vgs
 
@@ -158,23 +139,22 @@ def create(name: str, size_unit: str) -> None:
     logger.info(f'Creating volume with size {size_unit}b')
     with volume_lock:
         run_cmd(['lvcreate', '-L', f'{size_unit}b', '-n', name, VOLUME_GROUP, '-y'])
-    res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)])
+    res = subprocess.run(['mkfs.btrfs', '-f', volume_device(name)], capture_output=True, text=True)
     if res.returncode != 0:
-        stderr = res.stderr.decode('utf-8')
         cmd_line = ' '.join(res.args)
-        logger.error(f'Command {cmd_line} failed with {stderr}')
+        logger.error(f'Command {cmd_line} failed with {res.stderr}')
         remove(name)
         raise LvmPyError(f'Command {cmd_line} failed')
 
 
-def remove(name: str, is_schain=True) -> None:
+def remove(name: str) -> None:
     if name in SHARED_VOLUMES:
         logger.warning('Attempt to remove shared %s volume', name)
         return
     mountpoint = volume_mountpoint(name)
     logger.info(f'Removing device with {mountpoint}')
     if os.path.ismount(mountpoint):
-        unmount(name, is_schain)
+        unmount(name)
     with volume_lock:
         run_cmd(['lvremove', '-f', volume_device(name)])
     logger.info(f'Checking if we need to remove {mountpoint}')
@@ -183,7 +163,7 @@ def remove(name: str, is_schain=True) -> None:
         os.rmdir(mountpoint)
 
 
-def mount(name: str, is_schain=True) -> str:
+def mount(name: str) -> str:
     is_shared = name in SHARED_VOLUMES
     logger.info('Mounting volume %s, shared: %s', name, is_shared)
     mountpoint = volume_mountpoint(name)
@@ -204,133 +184,52 @@ def mount(name: str, is_schain=True) -> str:
 
     if os.path.ismount(mountpoint):
         logger.info('%s mountpoint is already in use', mountpoint)
-        unmount(name, is_schain)
+        unmount(name)
     if not os.path.exists(mountpoint):
         os.makedirs(mountpoint)
 
     with volume_lock:
         run_cmd(['mount', device, mountpoint])
 
-    if is_schain and not is_shared:
-        filestorage_path = os.path.join(mountpoint, 'filestorage')
-        filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
-        os.symlink(
-            filestorage_path,
-            filestorage_link_path,
-            target_is_directory=True
-        )
-        logger.info(f'Symlink was created in {filestorage_link_path}')
+    filestorage_path = os.path.join(mountpoint, 'filestorage')
+    filestorage_link_path = os.path.join(FILESTORAGE_MAPPING, name)
+    if os.path.islink(filestorage_link_path):
+        os.unlink(filestorage_link_path)
+    os.symlink(
+        filestorage_path,
+        filestorage_link_path,
+        target_is_directory=True
+    )
+    logger.info(f'Symlink was created in {filestorage_link_path}')
     return mountpoint
 
 
-def physical_volume_from_group(group: str) -> str:
+def physical_volume_from_group(group: str) -> str | None:
     vgs = volume_groups()
     if group not in vgs:
         return None
 
-    return run_cmd(
-        ['sudo', 'vgs', '-o', 'pv_name', group, '--noheadings']
-    ).strip()
+    return run_cmd(['vgs', '-o', 'pv_name', group, '--noheadings']).strip()
 
 
-def path_user(path):
-    res = subprocess.run(['fuser', path])
-    if res.returncode == 0:
-        str_pids = res.stdout.decode('utf-8').strip().split()
-        return list(map(int, str_pids))
-    else:
-        return []
-
-
-def file_in_path_user(path):
-    logger.info(f'Checking who is using files in {path} ...')
-    files = os.listdir(path)
-    if len(files) == 0:
-        return []
-    filepath = os.path.join(path, files[0])
-    logger.info(f'Checking filepath {filepath} ...')
-    return path_user(filepath)
-
-
-def log_lsof_for_volume_device(volume):
-    device = volume_device(volume)
-    logger.info(f'Checking lsof for {device}')
-    cmd = ['lsof', '+f', '--', device]
-    res = subprocess.run(cmd)
-    out = res.stdout.decode('utf-8')
-    err = res.stderr.decode('utf-8')
-    logger.info(f'Lsof returned err: {err}; out: {out}')
-
-
-def device_users(name):
-    path = volume_device(name)
-    return path_user(path)
-
-
-def mountpoint_users(name):
-    path = volume_mountpoint(name)
-    return path_user(path)
-
-
-def file_users(name):
-    path = volume_mountpoint(name)
-    return file_in_path_user(path)
-
-
-def process_info(pid):
-    ps = psutil.Process(pid)
-    return ps.as_dict()
-
-
-def log_consumers(consumers):
-    for pid in consumers:
-        info = process_info(pid)
-        logger.info(f'PID {pid}: {info}')
-
-
-def unmount(name, is_schain=True):
+def unmount(name):
     if name in SHARED_VOLUMES:
         logger.warning('Attempt to umount shared %s volume', name)
         return
 
-    log_lsof_for_volume_device(name)
-
-    device_consumers = device_users(name)
-    logger.info(f'Device is used by {len(device_consumers)}: '
-                f'{device_consumers}')
-    log_consumers(device_consumers)
-
-    mountpoint_consumers = mountpoint_users(name)
-    logger.info(f'Mountpoint is used by {len(mountpoint_consumers)}: '
-                f'{mountpoint_consumers}')
-    log_consumers(mountpoint_consumers)
-
-    file_consumers = file_users(name)
-    logger.info(f'File is used by {len(file_consumers)}: '
-                f'{file_consumers}')
-    log_consumers(file_consumers)
-
-    device = volume_device(name)
-    cmd = ['umount', device]
     with volume_lock:
-        run_cmd(cmd, retries=UNMOUNT_RETRIES_NUMBER)
+        run_cmd(['umount', volume_device(name)])
 
-    if is_schain:
-        link_name = os.path.join(FILESTORAGE_MAPPING, name)
-        os.remove(link_name)
+    os.remove(os.path.join(FILESTORAGE_MAPPING, name))
 
 
-def path(name):
-    stdout = run_cmd(['findmnt', volume_device(name), '--output', 'source'])
-    if not stdout:
-        return None
-
-    result = list(filter(None, stdout.split('\n')))[1]
-    return result
+def path(name: str) -> str:
+    mountpoint = volume_mountpoint(name)
+    return mountpoint if os.path.ismount(mountpoint) else ''
 
 
 def volumes(group=VOLUME_GROUP):
-    stdout = run_cmd(['lvs', '-o', 'name', '-S', f'vg_name={VOLUME_GROUP}'])
+    stdout = run_cmd(['lvs', '-o', 'name', '-S', f'vg_name={group}'])
     lvs = list(filter(
         None,
         map(lambda x: x.strip(), stdout.split('\n'))
@@ -352,7 +251,7 @@ def get_block_device_size(device: str = PHYSICAL_VOLUME) -> int:
     return size
 
 
-def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
+def get_inactive_volumes(group: str = VOLUME_GROUP) -> list:
     output = run_cmd(['lvscan'])
     if not output:  # no volumes
         return []
@@ -370,13 +269,13 @@ def get_inactive_volumes(group: Optional[str] = VOLUME_GROUP) -> list:
     return inactive
 
 
-def activate_group(group: Optional[str] = VOLUME_GROUP) -> None:
+def activate_group(group: str = VOLUME_GROUP) -> None:
     logger.info(f'Changing {group} to active')
     with volume_lock:
         run_cmd(['vgchange', '-ay', group])
 
 
-def ensure_group_active(group: Optional[str] = VOLUME_GROUP) -> None:
+def ensure_group_active(group: str = VOLUME_GROUP) -> None:
     groups = volume_groups()
     if group in groups:
         inactive = get_inactive_volumes(group=group)

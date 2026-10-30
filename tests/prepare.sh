@@ -13,6 +13,5 @@ fi
 mkdir ${FILESTORAGE_MAPPING} || true
 systemctl stop docker-lvmpy || true
 
-scripts/build.sh test test
-cp dist/lvmpy-test-Linux-x86_64 /usr/local/bin/lvmpy
+printf '#!/bin/sh\ncd "%s" && exec .venv/bin/python -m src.main\n' "$PWD" > /usr/local/bin/lvmpy
 chmod +x /usr/local/bin/lvmpy
