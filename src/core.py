@@ -217,8 +217,14 @@ def unmount(name):
         logger.warning('Attempt to umount shared %s volume', name)
         return
 
-    with volume_lock:
-        run_cmd(['umount', volume_device(name)])
+    device = volume_device(name)
+    try:
+        with volume_lock:
+            run_cmd(['umount', device])
+    except LvmPyError:
+        res = subprocess.run(['lsof', '+f', '--', device], capture_output=True, text=True)
+        logger.error(f'Volume {name} is used by: {res.stdout}')
+        raise
 
     os.remove(os.path.join(FILESTORAGE_MAPPING, name))
 

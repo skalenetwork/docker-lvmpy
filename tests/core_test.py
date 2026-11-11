@@ -90,6 +90,19 @@ def test_mount_unmount(vg):
     )
 
 
+def test_unmount_busy(vg, caplog):
+    create(FIRST_VOLUME_NAME, '250m')
+    mount(FIRST_VOLUME_NAME)
+    busy_path = os.path.join(volume_mountpoint(FIRST_VOLUME_NAME), 'busy')
+
+    with open(busy_path, 'w'):
+        with pytest.raises(LvmPyError):
+            unmount(FIRST_VOLUME_NAME)
+    assert busy_path in caplog.text
+
+    remove(FIRST_VOLUME_NAME)
+
+
 @pytest.fixture
 def shared(vg):
     try:
